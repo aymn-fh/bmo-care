@@ -86,6 +86,8 @@ app.use('/auth', require('./routes/auth'));
 app.use('/admin', require('./routes/admin'));
 app.use('/superadmin', require('./routes/superadmin'));
 app.use('/specialist', require('./routes/specialist'));
+app.use('/settings', require('./routes/settings'));
+app.use('/admin/activity', require('./routes/activity'));
 
 // Health check
 app.get('/health', (req, res) => {
