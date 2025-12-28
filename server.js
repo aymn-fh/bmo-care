@@ -42,7 +42,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Upload redirect
 app.use('/uploads', (req, res) => {
     if (!BACKEND_URL) return res.status(500).send('Backend URL missing');
-    res.redirect(`${BACKEND_URL}/uploads${req.url}`);
+
+    // Normalize logic to avoid double slashes
+    const baseUrl = BACKEND_URL.endsWith('/') ? BACKEND_URL.slice(0, -1) : BACKEND_URL;
+    const path = req.url.startsWith('/') ? req.url : `/${req.url}`;
+
+    res.redirect(`${baseUrl}/uploads${path}`);
 });
 
 // Session
