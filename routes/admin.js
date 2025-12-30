@@ -295,7 +295,8 @@ router.get('/specialists/:id/search-parents', async (req, res) => {
         // Search for parents not yet linked
         const parents = await User.find({
             role: 'parent',
-            _id: { $nin: linkedParentIds },
+            // We remove the filter for already linked parents because we might want to link a SECOND child of the same parent
+            // _id: { $nin: linkedParentIds }, 
             $or: [
                 { name: { $regex: query, $options: 'i' } },
                 { email: { $regex: query, $options: 'i' } }
@@ -304,7 +305,18 @@ router.get('/specialists/:id/search-parents', async (req, res) => {
             .select('_id name email phone')
             .limit(10);
 
-        res.json({ success: true, parents });
+        // Fetch children for each parent
+        const parentsWithChildren = await Promise.all(parents.map(async (parent) => {
+            const children = await Child.find({ parent: parent._id })
+                .select('_id name age gender assignedSpecialist')
+                .populate('assignedSpecialist', 'name');
+            return {
+                ...parent.toObject(),
+                children
+            };
+        }));
+
+        res.json({ success: true, parents: parentsWithChildren });
     } catch (error) {
         console.error(error);
         res.json({ success: false, message: error.message });
@@ -388,6 +400,105 @@ router.post('/specialists/:id/unlink-parent/:parentId', async (req, res) => {
         });
 
         req.flash('success_msg', 'تم إلغاء ربط ولي الأمر');
+        res.redirect(`/admin/specialists/${specialistId}`);
+    } catch (error) {
+        console.error(error);
+        req.flash('error_msg', 'حدث خطأ');
+        res.redirect('/admin/specialists');
+    }
+});
+
+// Link specific child to specialist
+router.post('/specialists/:id/link-child', async (req, res) => {
+    try {
+        const { childId, parentId } = req.body;
+        const specialistId = req.params.id;
+
+        const specialist = await User.findById(specialistId);
+        if (!specialist || specialist.role !== 'specialist') {
+            req.flash('error_msg', 'الأخصائي غير موجود');
+            return res.redirect('/admin/specialists');
+        }
+
+        // Verify specialist belongs to admin's center
+        if (!specialist.center || specialist.center.toString() !== req.user.center.toString()) {
+            req.flash('error_msg', 'غير مصرح لك بالوصول');
+            return res.redirect('/admin/specialists');
+        }
+
+        const child = await Child.findById(childId);
+        if (!child) {
+            req.flash('error_msg', 'الطفل غير موجود');
+            return res.redirect(`/admin/specialists/${specialistId}`);
+        }
+
+        // Check if already assigned to THIS specialist
+        if (child.assignedSpecialist && child.assignedSpecialist.toString() === specialistId) {
+            req.flash('error_msg', 'الطفل مرتبط بالفعل بهذا الأخصائي');
+            return res.redirect(`/admin/specialists/${specialistId}`);
+        }
+
+        // Assign specialist to child
+        child.assignedSpecialist = specialistId;
+        child.specialistRequestStatus = 'approved'; // Auto-approve if admin converts it
+        await child.save();
+
+        // Add child to specialist's assignedChildren
+        await User.findByIdAndUpdate(specialistId, {
+            $addToSet: { assignedChildren: childId }
+        });
+
+        // Ensure parent is linked to specialist (for reference/contact)
+        if (parentId) {
+            await User.findByIdAndUpdate(specialistId, {
+                $addToSet: { linkedParents: parentId }
+            });
+            // Update parent's linkedSpecialist only if they don't have one? 
+            // Or maybe linkedSpecialist on User model is deprecated in favor of child-level?
+            // For now, we keep it compatible.
+            await User.findByIdAndUpdate(parentId, {
+                linkedSpecialist: specialistId
+            });
+        }
+
+        req.flash('success_msg', 'تم ربط الطفل بالأخصائي بنجاح');
+        res.redirect(`/admin/specialists/${specialistId}`);
+    } catch (error) {
+        console.error(error);
+        req.flash('error_msg', 'حدث خطأ في ربط الطفل');
+        res.redirect('/admin/specialists');
+    }
+});
+
+// Unlink child from specialist
+router.post('/specialists/:id/unlink-child/:childId', async (req, res) => {
+    try {
+        const { id: specialistId, childId } = req.params;
+
+        const specialist = await User.findById(specialistId);
+        if (!specialist || specialist.role !== 'specialist') {
+            req.flash('error_msg', 'الأخصائي غير موجود');
+            return res.redirect('/admin/specialists');
+        }
+
+        // Verify specialist belongs to admin's center
+        if (!specialist.center || specialist.center.toString() !== req.user.center.toString()) {
+            req.flash('error_msg', 'غير مصرح لك بالوصول');
+            return res.redirect('/admin/specialists');
+        }
+
+        // Update Child
+        await Child.findByIdAndUpdate(childId, {
+            assignedSpecialist: null,
+            specialistRequestStatus: 'none'
+        });
+
+        // Remove from specialist's assignedChildren
+        await User.findByIdAndUpdate(specialistId, {
+            $pull: { assignedChildren: childId }
+        });
+
+        req.flash('success_msg', 'تم إلغاء تعيين الطفل');
         res.redirect(`/admin/specialists/${specialistId}`);
     } catch (error) {
         console.error(error);

@@ -189,6 +189,7 @@ module.exports = {
         parentInfo: 'معلومات ولي الأمر',
         cancelLink: 'إلغاء الربط',
         confirmUnlinkParent: 'هل تريد إلغاء ربط ولي الأمر؟',
+        confirmUnlinkChild: 'هل أنت متأكد من إلغاء ربط الطفل؟',
         parent: 'ولي الأمر',
 
         // Requests
@@ -498,6 +499,7 @@ module.exports = {
         parentInfo: 'Parent Information',
         cancelLink: 'Unlink',
         confirmUnlinkParent: 'Do you want to unlink this parent?',
+        confirmUnlinkChild: 'Are you sure you want to unlink this child?',
         parent: 'Parent',
 
         // Requests
