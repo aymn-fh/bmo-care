@@ -256,7 +256,7 @@ module.exports = {
         newPassword: 'كلمة المرور الجديدة',
 
         // Words
-        wordsManagement: 'إدارة الكلمات',
+        wordsManagement: 'إدارة المحتوى',
         wordsList: 'قائمة الكلمات',
         addWord: 'إضافة كلمة جديدة',
         wordText: 'الكلمة',
@@ -268,17 +268,30 @@ module.exports = {
         easy: 'سهل',
         medium: 'متوسط',
         hard: 'صعب',
-        selectChildToManageWords: 'اختر طفلاً لإدارة كلماته',
-        manageWords: 'إدارة الكلمات',
-        manageWordsFor: 'إدارة الكلمات للطفل',
+        selectChildToManageWords: 'اختر طفلاً لإدارة محتواه',
+        manageWords: 'إدارة المحتوى',
+        manageWordsFor: 'إدارة محتوى الطفل',
         backToChildren: 'العودة للأطفال',
         addNewWord: 'إضافة كلمة جديدة',
+        addNewContent: 'إضافة محتوى جديد',
         saveWord: 'حفظ الكلمة',
+        saveLetter: 'حفظ الحرف',
         library: 'المكتبة',
+        wordLibrary: 'مكتبة الكلمات',
+        letterLibrary: 'مكتبة الحروف',
         clickToUpload: 'اضغط لرفع صورة',
         noWordsFound: 'لا توجد كلمات مضافة',
+        noLettersFound: 'لا توجد حروف مضافة',
         childId: 'رقم تعريف الطالب (يدوي)',
         enterChildId: 'أدخل رقم التعريف...',
+        
+        // Content Types
+        words: 'كلمات',
+        letters: 'حروف',
+        letterText: 'حرف',
+        enterLetter: 'أدخل حرفاً...',
+        suggestedWords: 'كلمات مقترحة',
+        suggestedLetters: 'حروف مقترحة',
 
         // Filters
         all: 'الكل',
@@ -562,7 +575,7 @@ module.exports = {
         newPassword: 'New Password',
 
         // Words
-        wordsManagement: 'Words Management',
+        wordsManagement: 'Content Management',
         wordsList: 'Words List',
         addWord: 'Add New Word',
         wordText: 'Word',
@@ -574,15 +587,28 @@ module.exports = {
         easy: 'Easy',
         medium: 'Medium',
         hard: 'Hard',
-        selectChildToManageWords: 'Select a child to manage their words',
-        manageWords: 'Manage Words',
-        manageWordsFor: 'Managing words for',
+        selectChildToManageWords: 'Select a child to manage their content',
+        manageWords: 'Manage Content',
+        manageWordsFor: 'Managing content for',
         backToChildren: 'Back to Children',
         addNewWord: 'Add New Word',
+        addNewContent: 'Add New Content',
         saveWord: 'Save Word',
+        saveLetter: 'Save Letter',
         library: 'Library',
+        wordLibrary: 'Word Library',
+        letterLibrary: 'Letter Library',
         clickToUpload: 'Click to upload image',
         noWordsFound: 'No words found',
+        noLettersFound: 'No letters found',
+        
+        // Content Types
+        words: 'Words',
+        letters: 'Letters',
+        letterText: 'Letter',
+        enterLetter: 'Enter a letter...',
+        suggestedWords: 'Suggested Words',
+        suggestedLetters: 'Suggested Letters',
 
         // Settings Tabs
         editProfile: 'Edit Profile',

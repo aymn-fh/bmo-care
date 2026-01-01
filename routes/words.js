@@ -81,12 +81,12 @@ router.get('/api/list', async (req, res) => {
 // Apply middleware
 router.use(ensureSpecialist);
 
-// List Words (or Select Child)
+// List Words/Letters (or Select Child)
 router.get('/', async (req, res) => {
     try {
-        const { childId, difficulty } = req.query;
+        const { childId, difficulty, contentType } = req.query;
 
-        // If childId is provided, show words for that child
+        // If childId is provided, show content for that child
         if (childId) {
             const child = await Child.findOne({ _id: childId, assignedSpecialist: req.user._id });
 
@@ -98,14 +98,21 @@ router.get('/', async (req, res) => {
             const filter = { createdBy: req.user._id, child: childId };
             if (difficulty) filter.difficulty = difficulty;
 
-            const words = await Word.find(filter).sort('-createdAt');
+            // Get both words and letters
+            const wordsFilter = { ...filter, contentType: 'word' };
+            const lettersFilter = { ...filter, contentType: 'letter' };
+
+            const words = await Word.find(wordsFilter).sort('-createdAt');
+            const letters = await Word.find(lettersFilter).sort('-createdAt');
 
             return res.render('specialist/words', {
-                title: `${res.locals.__('wordsManagement') || 'إدارة الكلمات'} - ${child.name}`,
+                title: `${res.locals.__('wordsManagement') || 'إدارة المحتوى'} - ${child.name}`,
                 activePage: 'words',
-                mode: 'manage', // Manage words for specific child
+                mode: 'manage_child', // Manage content for specific child
                 child,
                 words,
+                letters,
+                contentType: contentType || 'word',
                 difficulty: difficulty || ''
             });
         }
@@ -114,11 +121,12 @@ router.get('/', async (req, res) => {
         const children = await Child.find({ assignedSpecialist: req.user._id }).sort('-createdAt');
 
         res.render('specialist/words', {
-            title: res.locals.__('wordsManagement') || 'إدارة الكلمات',
+            title: res.locals.__('wordsManagement') || 'إدارة المحتوى',
             activePage: 'words',
             mode: 'select_child', // Select child mode
             children,
-            words: [] // No words until child selected
+            words: [],
+            letters: [] // No content until child selected
         });
 
     } catch (error) {
@@ -128,16 +136,48 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Add Word
+// Add Content (Word or Letter)
 router.post('/add', upload.single('image'), async (req, res) => {
     try {
-        const { text, difficulty, childId } = req.body;
+        const { text, contentType, difficulty, childId } = req.body;
 
         if (!childId) {
             req.flash('error_msg', 'Child ID is required');
             return res.redirect('/specialist/words');
         }
 
+        if (!text || !contentType) {
+            req.flash('error_msg', 'Text and content type are required');
+            return res.redirect(`/specialist/words?childId=${childId}`);
+        }
+
+        if (!['word', 'letter'].includes(contentType)) {
+            req.flash('error_msg', 'Invalid content type');
+            return res.redirect(`/specialist/words?childId=${childId}`);
+        }
+
+        // Validate text length based on content type
+        if (contentType === 'letter' && text.length > 2) {
+            req.flash('error_msg', 'Letter with vowel must not exceed 2 characters');
+            return res.redirect(`/specialist/words?childId=${childId}`);
+        }
+
+        if (contentType === 'word' && text.length > 20) {
+            req.flash('error_msg', 'Word must not exceed 20 characters');
+            return res.redirect(`/specialist/words?childId=${childId}`);
+        }
+
+        // Check for duplicate content
+        const existingContent = await Word.findOne({
+            text: text.trim(),
+            contentType,
+            child: childId
+        });
+
+        if (existingContent) {
+            req.flash('error_msg', `${contentType === 'word' ? 'Word' : 'Letter'} already exists for this child`);
+            return res.redirect(`/specialist/words?childId=${childId}`);
+        }
 
         // Removed mandatory file check
         let imageFilename = 'default-word.png';
@@ -145,52 +185,62 @@ router.post('/add', upload.single('image'), async (req, res) => {
             imageFilename = req.file.filename;
         }
 
-
-        const word = new Word({
-            text,
-            difficulty,
+        const content = new Word({
+            text: text.trim(),
+            contentType,
+            difficulty: difficulty || 'easy',
             image: imageFilename,
             createdBy: req.user._id,
             child: childId
         });
 
-        await word.save();
+        await content.save();
 
-        req.flash('success_msg', '✅ تم حفظ الكلمة وإضافتها إلى قائمة تدريب الطفل بنجاح');
+        const successMessage = contentType === 'word' 
+            ? '✅ تم حفظ الكلمة وإضافتها إلى قائمة تدريب الطفل بنجاح'
+            : '✅ تم حفظ الحرف وإضافته إلى قائمة تدريب الطفل بنجاح';
+        
+        req.flash('success_msg', successMessage);
         res.redirect(`/specialist/words?childId=${childId}`);
     } catch (error) {
         console.error(error);
-        req.flash('error_msg', 'Error adding word');
+        req.flash('error_msg', 'Error adding content');
         const childId = req.body.childId ? `?childId=${req.body.childId}` : '';
         res.redirect(`/specialist/words${childId}`);
     }
 });
 
-// Delete Word
+// Delete Content (Word or Letter)
 router.post('/delete/:id', async (req, res) => {
     try {
-        const word = await Word.findOne({ _id: req.params.id, createdBy: req.user._id });
+        const content = await Word.findOne({ _id: req.params.id, createdBy: req.user._id });
 
-        if (!word) {
-            req.flash('error_msg', 'Word not found');
+        if (!content) {
+            req.flash('error_msg', 'Content not found');
             return res.redirect('/specialist/words');
         }
 
-        const childId = word.child; // Save child ID for redirect
+        const childId = content.child; // Save child ID for redirect
 
-        // Try to delete image file
-        try {
-            const imagePath = path.join(__dirname, '../../backend/uploads/words', word.image);
-            if (fs.existsSync(imagePath)) {
-                fs.unlinkSync(imagePath);
+        // Try to delete image file (only for words)
+        if (content.contentType === 'word') {
+            try {
+                const imagePath = path.join(__dirname, '../../backend/uploads/words', content.image);
+                if (fs.existsSync(imagePath)) {
+                    fs.unlinkSync(imagePath);
+                }
+            } catch (err) {
+                console.error('Error deleting image file:', err);
             }
-        } catch (err) {
-            console.error('Error deleting image file:', err);
         }
 
         await Word.findByIdAndDelete(req.params.id);
 
-        req.flash('success_msg', 'Word deleted successfully');
+        const successMessage = content.contentType === 'word' 
+            ? 'Word deleted successfully'
+            : 'Letter deleted successfully';
+        
+        req.flash('success_msg', successMessage);
         if (childId) {
             res.redirect(`/specialist/words?childId=${childId}`);
         } else {
@@ -198,7 +248,7 @@ router.post('/delete/:id', async (req, res) => {
         }
     } catch (error) {
         console.error(error);
-        req.flash('error_msg', 'Error deleting word');
+        req.flash('error_msg', 'Error deleting content');
         res.redirect('/specialist/words');
     }
 });
