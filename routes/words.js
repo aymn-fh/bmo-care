@@ -19,55 +19,6 @@ const upload = multer({
 });
 
 // ==========================================
-// PUBLIC API ROUTES (For Game App - Proxy)
-// ==========================================
-// This assumes the Game App connects to Portal URL for some reason.
-router.get('/api/list', async (req, res) => {
-    try {
-        const { childId } = req.query;
-        // Proxy to backend
-        // Note: Backend endpoint for game list might be different.
-        // Assuming backend has /api/words/game or similar, or we use standard list.
-        // Original code used Word.find({child: childId}).
-        // Let's assume we call a backend endpoint for this.
-        const response = await apiClient.get('/words/api/list', { params: { childId } }); // Unauthenticated proxy? Or use authGet if possible?
-        // If this is public, we can't use authGet (User might not be logged in).
-        // But apiClient usually attaches token if present.
-        // If the Game App hits this, it might send a token?
-        // Original code didn't check auth.
-
-        // Wait, original code was: 'router.get('/api/list', async (req, res) => ...)' NO AUTH middleware.
-        // So I should call backend without auth headers if possible, or use a service token?
-        // For now, I'll pass request headers if any.
-
-        // Let's try to just proxy it.
-        // But wait, apiClient is designed for logged in user.
-        // I will use axios directly for public route proxy if needed, or assume backend lets it pass.
-        // If backend route relies on DB, I need to call backend API.
-
-        // I'll skip this mostly if it's unused, but to be safe:
-        // Actually, let's Redirect 307 to backend? No, CORS might be issue.
-        // Better: Fetch from backend public endpoint.
-
-        // Let's assume Backend has /api/words/public-list
-        // For now I will mock it or try to call the backend equivalent logic.
-        // If backend logic was in this file, backend likely DOESN'T have this endpoint yet?
-        // Checking backend/routes/word.js... I haven't seen it yet.
-        // I will implement a basic proxy using apiClient with conditional auth.
-
-        const responseProxy = await apiClient.get('/words/public/list', { params: { childId } });
-        res.json(responseProxy.data);
-
-    } catch (error) {
-        console.error('API Proxy Error:', error.message);
-        res.status(500).json({
-            success: false,
-            message: 'Server error'
-        });
-    }
-});
-
-// ==========================================
 // SPECIALIST ROUTES (Protected)
 // ==========================================
 
@@ -80,7 +31,8 @@ router.get('/', async (req, res) => {
         const { childId, difficulty, contentType } = req.query;
 
         // Fetch children list first (needed for both views)
-        const childrenResponse = await apiClient.authGet(req, '/specialist/children');
+        // CORRECTED PATH: /specialists/my-children
+        const childrenResponse = await apiClient.authGet(req, '/specialists/my-children');
         const children = childrenResponse.data.success ? childrenResponse.data.children : [];
 
         // If childId is provided, show content for that child
@@ -94,8 +46,9 @@ router.get('/', async (req, res) => {
             }
 
             // Fetch words for this child
-            const response = await apiClient.authGet(req, '/specialist/words', {
-                params: { childId, difficulty, contentType }
+            // CORRECTED PATH: /words/child/:childId
+            const response = await apiClient.authGet(req, `/words/child/${childId}`, {
+                params: { difficulty, contentType }
             });
 
             const { words, letters } = response.data.success ? response.data : { words: [], letters: [] };
@@ -152,7 +105,8 @@ router.post('/add', upload.single('image'), async (req, res) => {
         const authConfig = apiClient.withAuth(req);
         const headers = { ...authConfig.headers, ...form.getHeaders() };
 
-        const response = await apiClient.post('/specialist/words/add', form, { headers });
+        // CORRECTED PATH: /words (POST)
+        const response = await apiClient.post('/words', form, { headers });
 
         if (response.data.success) {
             const successMessage = contentType === 'word'
@@ -175,15 +129,13 @@ router.post('/add', upload.single('image'), async (req, res) => {
 // Delete Content (Word or Letter)
 router.post('/delete/:id', async (req, res) => {
     try {
-        const response = await apiClient.authDelete(req, `/specialist/words/${req.params.id}`);
+        // CORRECTED PATH: /words/:id (DELETE)
+        const response = await apiClient.authDelete(req, `/words/${req.params.id}`);
 
         if (response.data.success) {
             req.flash('success_msg', 'Deleted successfully');
 
-            // Try to redirect back to child if possible, but we might not have childId here easily from response?
-            // If backend returns childId, we could use it.
-            // For now, redirect to main words page
-            const childId = response.data.childId; // Assume backend returns it
+            const childId = response.data.childId;
             if (childId) {
                 res.redirect(`/specialist/words?childId=${childId}`);
             } else {
