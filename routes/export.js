@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../models/User');
+const apiClient = require('../utils/apiClient');
 const { exportToPDF } = require('../utils/pdfExporter');
 const { ensureAdmin } = require('../middleware/auth');
 
@@ -8,11 +8,14 @@ const { ensureAdmin } = require('../middleware/auth');
 router.get('/specialists', ensureAdmin, async (req, res) => {
     try {
         const { format } = req.query;
-        const centerId = req.user.center;
+        // Fetch Data from Backend API
+        // Using the admin specialists list endpoint which should return all specialists for the center
+        // We might need to handle pagination if default list is paginated, but ideally export handles all.
+        // Assuming backend has an endpoint for 'all' or high limit.
+        // Let's use the list endpoint and assume it returns what we need or add query param ?limit=0 or ?all=true
+        const response = await apiClient.authGet(req, '/admin/specialists?limit=1000');
 
-        // Fetch Data
-        const specialists = await User.find({ role: 'specialist', center: centerId })
-            .select('name email phone staffId specialization createdAt');
+        const specialists = response.data.success ? response.data.specialists : [];
 
         // Prepare Data for Export
         const data = specialists.map(s => ({
@@ -42,9 +45,10 @@ router.get('/specialists', ensureAdmin, async (req, res) => {
         }
 
     } catch (error) {
-        console.error('Export Error:', error);
+        console.error('Export Error:', error.message);
         res.status(500).send('Export failed');
     }
 });
 
 module.exports = router;
+

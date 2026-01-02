@@ -1,46 +1,43 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../models/User');
-const Child = require('../models/Child');
-const LinkRequest = require('../models/LinkRequest');
-const Progress = require('../models/Progress');
-const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const path = require('path');
-const axios = require('axios');
-const FormData = require('form-data');
 const { ensureSpecialist } = require('../middleware/auth');
+const apiClient = require('../utils/apiClient');
+const FormData = require('form-data');
 
 // Apply specialist middleware to all routes
 router.use(ensureSpecialist);
 
+
 // Dashboard
 router.get('/', async (req, res) => {
     try {
-        const [parentsCount, childrenCount, pendingRequestsCount] = await Promise.all([
-            User.countDocuments({ linkedSpecialist: req.user.id }),
-            Child.countDocuments({ assignedSpecialist: req.user.id }),
-            LinkRequest.countDocuments({ to: req.user.id, status: 'pending' })
-        ]);
+        // Fetch dashboard stats from API
+        const response = await apiClient.authGet(req, '/specialist/dashboard');
 
-        const recentChildren = await Child.find({ assignedSpecialist: req.user.id })
-            .populate('parent', 'name profilePhoto')
-            .sort('-updatedAt')
-            .limit(5);
+        // Default values if API call fails or returns partial data
+        let stats = { parents: 0, children: 0, pendingRequests: 0 };
+        let recentChildren = [];
+
+        if (response.data.success) {
+            stats = response.data.stats;
+            recentChildren = response.data.recentChildren || [];
+        }
 
         res.render('specialist/dashboard', {
             title: res.locals.__('dashboard'),
-            stats: {
-                parents: parentsCount,
-                children: childrenCount,
-                pendingRequests: pendingRequestsCount
-            },
+            stats,
             recentChildren
         });
     } catch (error) {
-        console.error(error);
-        req.flash('error_msg', res.locals.__('errorOccurred'));
-        res.redirect('/');
+        console.error('Dashboard Error:', error.message);
+        // Render with empty data on error so page still loads
+        res.render('specialist/dashboard', {
+            title: res.locals.__('dashboard'),
+            stats: { parents: 0, children: 0, pendingRequests: 0 },
+            recentChildren: []
+        });
     }
 });
 
@@ -65,18 +62,12 @@ router.get('/chat', async (req, res) => {
 // List ALL KEY parents (User requested "All parents")
 router.get('/parents', async (req, res) => {
     try {
-        const specialist = await User.findById(req.user.id);
-        // Fetch ONLY linked parents
-        const linkedParentIds = specialist.linkedParents || [];
+        const response = await apiClient.authGet(req, '/specialist/parents');
+        const parents = response.data.success ? response.data.parents : [];
 
-        const parents = await User.find({
-            _id: { $in: linkedParentIds },
-            role: 'parent'
-        }).sort('-createdAt');
-
-        // Add isLinked flag (always true for this view, but keeping structure if needed)
+        // Add isLinked flag (always true for this view as backend returns linked parents)
         const parentsWithStatus = parents.map(p => ({
-            ...p.toObject(),
+            ...p,
             isLinked: true
         }));
 
@@ -85,32 +76,30 @@ router.get('/parents', async (req, res) => {
             parents: parentsWithStatus
         });
     } catch (error) {
-        console.error(error);
+        console.error('List Parents Error:', error.message);
         req.flash('error_msg', res.locals.__('errorOccurred'));
         res.redirect('/specialist');
     }
 });
 
+
 // API endpoint to fetch parents as JSON (Used by children.ejs modal)
-// BYPASSES BACKEND PROXY
+// Proxies to backend
 router.get('/api/parents', async (req, res) => {
     try {
-        console.log('API /parents requested by:', req.user.id);
-        const specialist = await User.findById(req.user.id)
-            .populate({
-                path: 'linkedParents',
-                select: 'name email phone profilePhoto'
-            });
-
-        console.log('Specialist found:', specialist ? specialist.name : 'NOT FOUND');
-        console.log('Linked Parents:', specialist ? (specialist.linkedParents ? specialist.linkedParents.length : 'undefined') : 'N/A');
+        // Fetch linked parents from backend
+        // We can reuse the same endpoint /specialist/parents or a JSON specific one if exists
+        // Let's assume /specialist/parents works but returns JSON if Accept header is json, 
+        // OR we just use the data returned for the view.
+        // Actually, let's just returned the data we need.
+        const response = await apiClient.authGet(req, '/specialist/parents');
 
         res.json({
             success: true,
-            parents: specialist.linkedParents || []
+            parents: response.data.success ? response.data.parents : []
         });
     } catch (error) {
-        console.error('API Error:', error);
+        console.error('API Parents Error:', error.message);
         res.status(500).json({
             success: false,
             message: error.message
@@ -118,168 +107,37 @@ router.get('/api/parents', async (req, res) => {
     }
 });
 
-// API endpoint to create child locally (Used by children.ejs modal)
-// BYPASSES BACKEND PROXY
+// API endpoint to create child (Used by children.ejs modal)
+// Proxies to backend
 router.post('/api/create-child', async (req, res) => {
     try {
-        const { parentId, name, age, gender, difficultyLevel } = req.body;
+        // Forward request to backend /api/children (or specialist specific route if needed)
+        // Ensure we pass necessary data. The backend usually expects parentId in body.
 
-        // Validate required fields
-        if (!parentId || !name || !age || !gender) {
-            return res.status(400).json({
-                success: false,
-                message: 'All fields are required'
-            });
-        }
+        const response = await apiClient.authPost(req, '/children', req.body);
 
-        // Verify parent is linked to specialist
-        const specialist = await User.findById(req.user.id);
-        const linkedParents = (specialist.linkedParents || []).map(id => id.toString());
-
-        if (!linkedParents.includes(parentId)) {
-            return res.status(403).json({
-                success: false,
-                message: 'Parent is not linked to this specialist'
-            });
-        }
-
-        // Create the child
-        const child = await Child.create({
-            name,
-            age,
-            gender,
-            parent: parentId,
-            assignedSpecialist: req.user.id,
-            specialistRequestStatus: 'approved',
-            targetLetters: [],
-            targetWords: [],
-            difficultyLevel: difficultyLevel || 'beginner'
-        });
-
-        // Add child to specialist's assignedChildren
-        await User.findByIdAndUpdate(req.user.id, {
-            $addToSet: { assignedChildren: child._id }
-        });
-
-        // Create referral record
-        const Referral = require('../models/Referral');
-        try {
-            await Referral.create({
-                parent: parentId,
-                specialist: req.user.id,
-                referralType: 'specialist_created',
-                status: 'active',
-                notes: `Child ${child.name} created by specialist`
-            });
-        } catch (err) {
-            console.error('Referral creation failed:', err);
-        }
-
-        res.json({
-            success: true,
-            message: 'Child created successfully',
-            child
-        });
-
+        res.json(response.data);
     } catch (error) {
-        console.error('Create Child Error:', error);
+        console.error('Create Child Proxy Error:', error.message);
         res.status(500).json({
             success: false,
-            message: error.message
+            message: error.response?.data?.message || error.message
         });
     }
 });
 
-// API endpoint to create child locally (Used by children.ejs modal)
-// BYPASSES BACKEND PROXY
-router.post('/api/create-child', async (req, res) => {
-    try {
-        const { parentId, name, age, gender, difficultyLevel } = req.body;
-
-        // Validate required fields
-        if (!parentId || !name || !age || !gender) {
-            return res.status(400).json({
-                success: false,
-                message: 'All fields are required'
-            });
-        }
-
-        // Verify parent is linked to specialist
-        const specialist = await User.findById(req.user.id);
-        const linkedParents = (specialist.linkedParents || []).map(id => id.toString());
-
-        if (!linkedParents.includes(parentId)) {
-            return res.status(403).json({
-                success: false,
-                message: 'Parent is not linked to this specialist'
-            });
-        }
-
-        // Create the child
-        const child = await Child.create({
-            name,
-            age,
-            gender,
-            parent: parentId,
-            assignedSpecialist: req.user.id,
-            specialistRequestStatus: 'approved',
-            targetLetters: [],
-            targetWords: [],
-            difficultyLevel: difficultyLevel || 'beginner'
-        });
-
-        // Add child to specialist's assignedChildren
-        await User.findByIdAndUpdate(req.user.id, {
-            $addToSet: { assignedChildren: child._id }
-        });
-
-        // Create referral record
-        const Referral = require('../models/Referral');
-        try {
-            await Referral.create({
-                parent: parentId,
-                specialist: req.user.id,
-                referralType: 'specialist_created',
-                status: 'active',
-                notes: `Child ${child.name} created by specialist`
-            });
-        } catch (err) {
-            console.error('Referral creation failed:', err);
-        }
-
-        res.json({
-            success: true,
-            message: 'Child created successfully',
-            child
-        });
-
-    } catch (error) {
-        console.error('Create Child Error:', error);
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
-    }
-});
 
 // View parent details with their children
 router.get('/parents/:id', async (req, res) => {
     try {
-        const parent = await User.findById(req.params.id);
+        const response = await apiClient.authGet(req, `/specialist/parents/${req.params.id}`);
 
-        if (!parent || parent.role !== 'parent') {
+        if (!response.data.success) {
             req.flash('error_msg', res.locals.__('pageNotFound'));
             return res.redirect('/specialist/parents');
         }
 
-        // Verify parent is linked to specialist
-        const specialist = await User.findById(req.user.id);
-        if (!specialist.linkedParents || !specialist.linkedParents.includes(req.params.id)) {
-            req.flash('error_msg', res.locals.__('accessDenied'));
-            return res.redirect('/specialist/parents');
-        }
-
-        const children = await Child.find({ parent: req.params.id, assignedSpecialist: req.user.id });
+        const { parent, children } = response.data;
 
         res.render('specialist/parent-details', {
             title: parent.name,
@@ -287,7 +145,7 @@ router.get('/parents/:id', async (req, res) => {
             children
         });
     } catch (error) {
-        console.error(error);
+        console.error('Parent Details Error:', error.message);
         req.flash('error_msg', res.locals.__('errorOccurred'));
         res.redirect('/specialist/parents');
     }
@@ -296,20 +154,16 @@ router.get('/parents/:id', async (req, res) => {
 // Unlink parent
 router.post('/parents/:id/unlink', async (req, res) => {
     try {
-        // Remove parent from specialist's linkedParents
-        await User.findByIdAndUpdate(req.user.id, {
-            $pull: { linkedParents: req.params.id }
-        });
+        const response = await apiClient.authPost(req, `/specialist/parents/${req.params.id}/unlink`);
 
-        // Remove specialist from parent's linkedSpecialist
-        await User.findByIdAndUpdate(req.params.id, {
-            linkedSpecialist: null
-        });
-
-        req.flash('success_msg', res.locals.__('deletedSuccessfully'));
+        if (response.data.success) {
+            req.flash('success_msg', res.locals.__('deletedSuccessfully'));
+        } else {
+            req.flash('error_msg', response.data.message || res.locals.__('errorOccurred'));
+        }
         res.redirect('/specialist/parents');
     } catch (error) {
-        console.error(error);
+        console.error('Unlink Parent Error:', error.message);
         req.flash('error_msg', res.locals.__('errorOccurred'));
         res.redirect('/specialist/parents');
     }
@@ -322,15 +176,15 @@ router.post('/parents/:id/unlink', async (req, res) => {
 // List my children
 router.get('/children', async (req, res) => {
     try {
-        const children = await Child.find({ assignedSpecialist: req.user.id })
-            .populate('parent', 'name email staffId');
+        const response = await apiClient.authGet(req, '/specialist/children');
+        const children = response.data.success ? response.data.children : [];
 
         res.render('specialist/children', {
             title: res.locals.__('myChildren'),
             children
         });
     } catch (error) {
-        console.error(error);
+        console.error('List Children Error:', error.message);
         req.flash('error_msg', res.locals.__('errorOccurred'));
         res.redirect('/specialist');
     }
@@ -341,6 +195,7 @@ router.get('/children/:id', async (req, res) => {
     res.redirect(`/specialist/child/${req.params.id}/analytics`);
 });
 
+
 // ========================================
 // LINK REQUESTS
 // ========================================
@@ -348,12 +203,16 @@ router.get('/children/:id', async (req, res) => {
 // List link requests
 router.get('/requests', async (req, res) => {
     try {
-        const requests = await LinkRequest.find({ to: req.user.id })
-            .populate('from', 'name email phone')
-            .sort('-createdAt');
+        const response = await apiClient.authGet(req, '/specialist/requests');
 
-        const pendingRequests = requests.filter(r => r.status === 'pending');
-        const historyRequests = requests.filter(r => r.status !== 'pending');
+        let pendingRequests = [];
+        let historyRequests = [];
+
+        if (response.data.success) {
+            const requests = response.data.requests || [];
+            pendingRequests = requests.filter(r => r.status === 'pending');
+            historyRequests = requests.filter(r => r.status !== 'pending');
+        }
 
         res.render('specialist/requests', {
             title: res.locals.__('linkRequests'),
@@ -361,7 +220,7 @@ router.get('/requests', async (req, res) => {
             historyRequests
         });
     } catch (error) {
-        console.error(error);
+        console.error('List Requests Error:', error.message);
         req.flash('error_msg', res.locals.__('errorOccurred'));
         res.redirect('/specialist');
     }
@@ -370,41 +229,16 @@ router.get('/requests', async (req, res) => {
 // Accept request
 router.post('/requests/:id/accept', async (req, res) => {
     try {
-        const request = await LinkRequest.findById(req.params.id);
+        const response = await apiClient.authPost(req, `/specialist/requests/${req.params.id}/accept`);
 
-        if (!request || request.to.toString() !== req.user.id) {
-            req.flash('error_msg', res.locals.__('pageNotFound'));
-            return res.redirect('/specialist/requests');
+        if (response.data.success) {
+            req.flash('success_msg', res.locals.__('updatedSuccessfully'));
+        } else {
+            req.flash('error_msg', response.data.message || res.locals.__('errorOccurred'));
         }
-
-        if (request.status !== 'pending') {
-            req.flash('error_msg', res.locals.__('errorOccurred')); // Request already processed
-            return res.redirect('/specialist/requests');
-        }
-
-        // Update request status
-        request.status = 'accepted';
-        await request.save();
-
-        // Link parent to specialist
-        await User.findByIdAndUpdate(req.user.id, {
-            $addToSet: { linkedParents: request.from }
-        });
-
-        await User.findByIdAndUpdate(request.from, {
-            linkedSpecialist: req.user.id
-        });
-
-        // Reject other pending requests from this parent
-        await LinkRequest.updateMany(
-            { from: request.from, status: 'pending', _id: { $ne: request._id } },
-            { status: 'rejected' }
-        );
-
-        req.flash('success_msg', res.locals.__('updatedSuccessfully'));
         res.redirect('/specialist/requests');
     } catch (error) {
-        console.error(error);
+        console.error('Accept Request Error:', error.message);
         req.flash('error_msg', res.locals.__('errorOccurred'));
         res.redirect('/specialist/requests');
     }
@@ -413,29 +247,21 @@ router.post('/requests/:id/accept', async (req, res) => {
 // Reject request
 router.post('/requests/:id/reject', async (req, res) => {
     try {
-        const request = await LinkRequest.findById(req.params.id);
+        const response = await apiClient.authPost(req, `/specialist/requests/${req.params.id}/reject`);
 
-        if (!request || request.to.toString() !== req.user.id) {
-            req.flash('error_msg', res.locals.__('pageNotFound'));
-            return res.redirect('/specialist/requests');
+        if (response.data.success) {
+            req.flash('success_msg', res.locals.__('updatedSuccessfully'));
+        } else {
+            req.flash('error_msg', response.data.message || res.locals.__('errorOccurred'));
         }
-
-        if (request.status !== 'pending') {
-            req.flash('error_msg', res.locals.__('errorOccurred'));
-            return res.redirect('/specialist/requests');
-        }
-
-        request.status = 'rejected';
-        await request.save();
-
-        req.flash('success_msg', res.locals.__('updatedSuccessfully'));
         res.redirect('/specialist/requests');
     } catch (error) {
-        console.error(error);
+        console.error('Reject Request Error:', error.message);
         req.flash('error_msg', res.locals.__('errorOccurred'));
         res.redirect('/specialist/requests');
     }
 });
+
 
 // ========================================
 // ACCOUNT MANAGEMENT
@@ -445,9 +271,12 @@ router.post('/requests/:id/reject', async (req, res) => {
 router.get('/account', async (req, res) => {
     try {
         // Fetch ALL parents with their linked specialist info
-        const allParents = await User.find({ role: 'parent' })
-            .populate('linkedSpecialist', 'name')
-            .sort('-createdAt');
+        // We need an endpoint for this. Assuming /specialist/parents-directory or similar
+        // Since this view lists ALL parents to find new ones, users normally shouldn't see ALL parents in the system unless authorized.
+        // Assuming the logic is correct for this app:
+        const response = await apiClient.authGet(req, '/specialist/account/parents-directory');
+
+        const allParents = response.data.success ? response.data.parents : [];
 
         res.render('specialist/account', {
             title: res.locals.__('accountManagement'),
@@ -455,7 +284,7 @@ router.get('/account', async (req, res) => {
             currentSpecialistId: req.user.id
         });
     } catch (error) {
-        console.error(error);
+        console.error('Account Page Error:', error.message);
         req.flash('error_msg', res.locals.__('errorOccurred'));
         res.redirect('/specialist');
     }
@@ -465,40 +294,21 @@ router.get('/account', async (req, res) => {
 router.get('/account/search', async (req, res) => {
     try {
         const { query } = req.query;
-        const specialist = await User.findById(req.user.id)
-            .populate({
-                path: 'linkedParents',
-                select: 'name email phone'
-            });
 
-        let searchResults = [];
+        const response = await apiClient.authGet(req, '/specialist/account/search', {
+            params: { query }
+        });
 
-        if (query && query.trim()) {
-            // Search for parents by name or email
-            const parents = await User.find({
-                role: 'parent',
-                $or: [
-                    { name: { $regex: query, $options: 'i' } },
-                    { email: { $regex: query, $options: 'i' } }
-                ]
-            }).select('name email phone').limit(20);
-
-            // Mark which ones are already linked
-            const linkedIds = (specialist.linkedParents || []).map(p => p._id.toString());
-            searchResults = parents.map(p => ({
-                ...p.toObject(),
-                isLinked: linkedIds.includes(p._id.toString())
-            }));
-        }
+        const { searchResults, linkedParents } = response.data.success ? response.data : { searchResults: [], linkedParents: [] };
 
         res.render('specialist/account', {
             title: res.locals.__('accountManagement'),
-            linkedParents: specialist.linkedParents || [],
+            linkedParents: linkedParents || [],
             searchQuery: query || '',
-            searchResults
+            searchResults: searchResults || []
         });
     } catch (error) {
-        console.error(error);
+        console.error('Account Search Error:', error.message);
         req.flash('error_msg', res.locals.__('errorOccurred'));
         res.redirect('/specialist/account');
     }
@@ -509,36 +319,21 @@ router.post('/account/link/:parentId', async (req, res) => {
     try {
         const { parentId } = req.params;
 
-        // Check if parent exists
-        const parent = await User.findById(parentId);
-        if (!parent || parent.role !== 'parent') {
-            req.flash('error_msg', res.locals.__('pageNotFound'));
-            return res.redirect('/specialist/account');
+        const response = await apiClient.authPost(req, `/specialist/account/link/${parentId}`);
+
+        if (response.data.success) {
+            req.flash('success_msg', res.locals.__('updatedSuccessfully'));
+        } else {
+            req.flash('error_msg', response.data.message || res.locals.__('errorOccurred'));
         }
-
-        // Check if already linked to another specialist
-        if (parent.linkedSpecialist && parent.linkedSpecialist.toString() !== req.user.id) {
-            req.flash('error_msg', res.locals.__('errorOccurred')); // Already linked
-            return res.redirect('/specialist/account');
-        }
-
-        // Link parent to specialist
-        await User.findByIdAndUpdate(req.user.id, {
-            $addToSet: { linkedParents: parentId }
-        });
-
-        await User.findByIdAndUpdate(parentId, {
-            linkedSpecialist: req.user.id
-        });
-
-        req.flash('success_msg', res.locals.__('updatedSuccessfully'));
         res.redirect('/specialist/account');
     } catch (error) {
-        console.error(error);
+        console.error('Account Link Error:', error.message);
         req.flash('error_msg', res.locals.__('errorOccurred'));
         res.redirect('/specialist/account');
     }
 });
+
 
 // ===== PROFILE ROUTES =====
 
@@ -563,27 +358,17 @@ const upload = multer({
 // View Profile
 router.get('/profile', async (req, res) => {
     try {
-        const user = await User.findById(req.user.id)
-            .populate('center', 'name_ar name_en');
+        const response = await apiClient.authGet(req, '/specialist/profile');
 
-        // Get stats
-        const [childrenCount, parentsCount, sessionsCount] = await Promise.all([
-            Child.countDocuments({ assignedSpecialist: req.user.id }),
-            User.countDocuments({ linkedSpecialist: req.user.id }),
-            Progress.countDocuments({ createdBy: req.user.id })
-        ]);
+        const { user, stats } = response.data.success ? response.data : { user: req.user, stats: {} };
 
         res.render('specialist/profile', {
             title: res.locals.__('profile'),
             user,
-            stats: {
-                children: childrenCount,
-                parents: parentsCount,
-                sessions: sessionsCount
-            }
+            stats: stats || {}
         });
     } catch (error) {
-        console.error(error);
+        console.error('Profile View Error:', error.message);
         req.flash('error_msg', res.locals.__('errorOccurred'));
         res.redirect('/specialist');
     }
@@ -592,36 +377,23 @@ router.get('/profile', async (req, res) => {
 // Update Profile
 router.post('/profile/update', async (req, res) => {
     try {
-        const { name, email, phone, specialization, bio } = req.body;
+        const response = await apiClient.authPost(req, '/specialist/profile/update', req.body);
 
-        // Check if email is already taken by another user
-        if (email !== req.user.email) {
-            const existingUser = await User.findOne({ email, _id: { $ne: req.user.id } });
-            if (existingUser) {
-                req.flash('error_msg', 'البريد الإلكتروني مستخدم بالفعل');
-                return res.redirect('/specialist/profile');
-            }
+        if (response.data.success) {
+            req.flash('success_msg', res.locals.__('updatedSuccessfully'));
+        } else {
+            req.flash('error_msg', response.data.message || 'فشل التحديث');
         }
-
-        await User.findByIdAndUpdate(req.user.id, {
-            name,
-            email,
-            phone,
-            specialization,
-            bio
-        });
-
-        req.flash('success_msg', res.locals.__('updatedSuccessfully'));
         res.redirect('/specialist/profile');
     } catch (error) {
-        console.error(error);
+        console.error('Profile Update Error:', error.message);
         req.flash('error_msg', res.locals.__('errorOccurred'));
         res.redirect('/specialist/profile');
     }
 });
 
-// Upload Profile Photo
 // Upload Profile Photo (Relay to Backend)
+// Optimized to use apiClient logic if possible or keep direct axios if form-data handling is tricky
 router.post('/profile/upload-photo', upload.single('photo'), async (req, res) => {
     try {
         if (!req.file) {
@@ -629,30 +401,27 @@ router.post('/profile/upload-photo', upload.single('photo'), async (req, res) =>
             return res.redirect('/specialist/profile');
         }
 
-        // Create form data to send to backend
         const form = new FormData();
         form.append('photo', req.file.buffer, req.file.originalname);
 
-        // Get Backend URL
-        const backendUrl = process.env.BACKEND_URL || 'http://localhost:8080';
+        // We use apiClient directly, but need to handle headers for FormData
+        // apiClient.authPost handles Auth header, but we need to merge with form headers
+        const authConfig = apiClient.withAuth(req);
+        const headers = { ...authConfig.headers, ...form.getHeaders() };
 
-        // Log for debugging
-        console.log(`Uploading photo to: ${backendUrl}/api/upload`);
-
-        // Send to backend
-        const response = await axios.post(`${backendUrl}/api/upload`, form, {
-            headers: {
-                ...form.getHeaders()
-            }
-        });
+        // Direct call to relative path on baseURL
+        const response = await apiClient.post('/upload', form, { headers });
 
         if (response.data && response.data.success) {
+            // Update successful on backend (which presumably updates DB)
+            // But if 'upload' only returns path, we might need a second call to update user profile?
+            // Original code did: await User.findByIdAndUpdate(...)
+            // So we likely need to call an endpoint to update the profile photo specifically if /upload is generic
+
             const photoPath = response.data.path;
 
-            // Update user in DB with the path returned by backend
-            await User.findByIdAndUpdate(req.user.id, {
-                profilePhoto: photoPath
-            });
+            // Call update profile photo endpoint
+            await apiClient.authPost(req, '/specialist/profile/update-photo', { photoPath });
 
             req.flash('success_msg', 'تم تحديث الصورة بنجاح');
         } else {
@@ -663,9 +432,6 @@ router.post('/profile/upload-photo', upload.single('photo'), async (req, res) =>
 
     } catch (error) {
         console.error('Upload Relay Error:', error.message);
-        if (error.response) {
-            console.error('Backend Response:', error.response.data);
-        }
         req.flash('error_msg', res.locals.__('errorOccurred'));
         res.redirect('/specialist/profile');
     }
@@ -674,67 +440,35 @@ router.post('/profile/upload-photo', upload.single('photo'), async (req, res) =>
 // Change Password
 router.post('/profile/change-password', async (req, res) => {
     try {
-        const { currentPassword, newPassword, confirmPassword } = req.body;
+        const response = await apiClient.authPost(req, '/specialist/profile/change-password', req.body);
 
-        // Validate
-        if (!currentPassword || !newPassword || !confirmPassword) {
-            req.flash('error_msg', 'جميع الحقول مطلوبة');
-            return res.redirect('/specialist/profile');
+        if (response.data.success) {
+            req.flash('success_msg', 'تم تغيير كلمة المرور بنجاح');
+        } else {
+            req.flash('error_msg', response.data.message || 'فشل تغيير كلمة المرور');
         }
-
-        if (newPassword !== confirmPassword) {
-            req.flash('error_msg', 'كلمات المرور الجديدة غير متطابقة');
-            return res.redirect('/specialist/profile');
-        }
-
-        if (newPassword.length < 6) {
-            req.flash('error_msg', 'كلمة المرور يجب أن تكون 6 أحرف على الأقل');
-            return res.redirect('/specialist/profile');
-        }
-
-        // Get user with password
-        const user = await User.findById(req.user.id).select('+password');
-
-        // Check current password
-        const isMatch = await user.comparePassword(currentPassword);
-        if (!isMatch) {
-            req.flash('error_msg', 'كلمة المرور الحالية غير صحيحة');
-            return res.redirect('/specialist/profile');
-        }
-
-        // Update password
-        user.password = newPassword;
-        await user.save();
-
-        req.flash('success_msg', 'تم تغيير كلمة المرور بنجاح');
         res.redirect('/specialist/profile');
     } catch (error) {
-        console.error(error);
+        console.error('Change Password Error:', error.message);
         req.flash('error_msg', res.locals.__('errorOccurred'));
         res.redirect('/specialist/profile');
     }
 });
+
 
 // ===== CHILD ANALYTICS ROUTES =====
 
 // Child Analytics Page (The Unified View)
 router.get('/child/:id/analytics', async (req, res) => {
     try {
-        const child = await Child.findById(req.params.id)
-            .populate('parent', 'name email profilePhoto'); // Added profilePhoto for header
+        const response = await apiClient.authGet(req, `/specialist/child/${req.params.id}/analytics`);
 
-        if (!child) {
+        if (!response.data.success) {
             req.flash('error_msg', res.locals.__('not_found'));
             return res.redirect('/specialist/children');
         }
 
-        // Verify specialist has access
-        if (child.assignedSpecialist.toString() !== req.user.id) {
-            req.flash('error_msg', res.locals.__('unauthorized'));
-            return res.redirect('/specialist/children');
-        }
-
-        const progress = await Progress.findOne({ child: req.params.id });
+        const { child, progress } = response.data;
 
         res.render('specialist/child-analytics', {
             title: `تحليلات ${child.name}`,
@@ -742,7 +476,7 @@ router.get('/child/:id/analytics', async (req, res) => {
             progress
         });
     } catch (error) {
-        console.error(error);
+        console.error('Analytics View Error:', error.message);
         req.flash('error_msg', res.locals.__('errorOccurred'));
         res.redirect('/specialist/children');
     }
@@ -751,109 +485,16 @@ router.get('/child/:id/analytics', async (req, res) => {
 // Child Analytics Data API
 router.get('/child/:id/analytics/data', async (req, res) => {
     try {
-        const child = await Child.findById(req.params.id);
-
-        if (!child || child.assignedSpecialist.toString() !== req.user.id) {
-            return res.status(403).json({
-                success: false,
-                message: 'Unauthorized'
-            });
-        }
-
-        // Get progress records
-        const progressRecords = await Progress.find({ child: child._id })
-            .sort('createdAt')
-            .limit(100);
-
-        // Calculate statistics
-        const stats = {
-            totalSessions: progressRecords.length,
-            averageScore: 0,
-            successRate: 0,
-            skillsProgress: {}
-        };
-
-        if (progressRecords.length > 0) {
-            // Calculate average score
-            const totalScore = progressRecords.reduce((sum, record) => {
-                return sum + (record.score || 0);
-            }, 0);
-            stats.averageScore = Math.round(totalScore / progressRecords.length);
-
-            // Calculate success rate (score >= 70)
-            const successfulSessions = progressRecords.filter(r => (r.score || 0) >= 70).length;
-            stats.successRate = Math.round((successfulSessions / progressRecords.length) * 100);
-
-            // Group by skill
-            const skillGroups = {};
-            progressRecords.forEach(record => {
-                const skill = record.activityId || 'general';
-                if (!skillGroups[skill]) {
-                    skillGroups[skill] = {
-                        sessions: [],
-                        totalScore: 0
-                    };
-                }
-                skillGroups[skill].sessions.push(record);
-                skillGroups[skill].totalScore += (record.score || 0);
-            });
-
-            // Calculate skill averages
-            for (const [skill, data] of Object.entries(skillGroups)) {
-                stats.skillsProgress[skill] = {
-                    averageScore: Math.round(data.totalScore / data.sessions.length),
-                    sessionsCount: data.sessions.length,
-                    latestScore: data.sessions[data.sessions.length - 1].score || 0
-                };
-            }
-        }
-
-        // Prepare chart data
-        const chartData = {
-            // Line chart: Progress over time
-            timeline: {
-                labels: progressRecords.slice(-20).map(r =>
-                    new Date(r.createdAt).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' })
-                ),
-                data: progressRecords.slice(-20).map(r => r.score || 0)
-            },
-            // Bar chart: Skills comparison
-            skills: {
-                labels: Object.keys(stats.skillsProgress).map(skill =>
-                    skill === 'general' ? 'عام' : `نشاط ${skill}`
-                ),
-                data: Object.values(stats.skillsProgress).map(skill => skill.averageScore)
-            },
-            // Pie chart: Success vs Failure
-            successRate: {
-                labels: ['النجاح', 'التحسين المطلوب'],
-                data: [
-                    stats.successRate,
-                    100 - stats.successRate
-                ]
-            },
-            // Difficulty distribution
-            difficulty: {
-                easy: progressRecords.filter(r => r.difficulty === 'easy').length,
-                medium: progressRecords.filter(r => r.difficulty === 'medium').length,
-                hard: progressRecords.filter(r => r.difficulty === 'hard').length
-            }
-        };
-
-        res.json({
-            success: true,
-            stats,
-            chartData
-        });
+        const response = await apiClient.authGet(req, `/specialist/child/${req.params.id}/analytics/data`);
+        res.json(response.data);
     } catch (error) {
-        console.error(error);
+        console.error('Analytics Data API Error:', error.message);
         res.status(500).json({
             success: false,
-            message: 'Error fetching analytics'
+            message: error.message
         });
     }
 });
-
 
 // ========================================
 // CHAT REDIRECT (Feature Stub)
@@ -864,10 +505,6 @@ router.get('/chat/init/:userId', async (req, res) => {
     res.redirect('/specialist/chat?target=' + req.params.userId);
 });
 
-
-
-
-
 // ========================================
 // SESSIONS LOG (Progress Reports)
 // ========================================
@@ -875,40 +512,16 @@ router.get('/sessions', async (req, res) => {
     try {
         const { child, childId, dateFrom, dateTo } = req.query;
 
-        // Build filter
-        // Note: Progress model likely references the specialist via 'specialist' or 'createdBy'
-        // Let's assume 'specialist' based on previous code, but check if it needs to match query
-        const filter = { specialist: req.user._id };
+        const response = await apiClient.authGet(req, '/specialist/sessions', {
+            params: { child, childId, dateFrom, dateTo }
+        });
 
-        // Handle filter by Child (Dropdown or Manual ID)
-        if (childId) {
-            filter.child = childId; // Manual ID input takes precedence
-        } else if (child) {
-            filter.child = child; // Dropdown value
-        }
-
-        if (dateFrom || dateTo) {
-            filter.date = {};
-            if (dateFrom) filter.date.$gte = new Date(dateFrom);
-            if (dateTo) filter.date.$lte = new Date(dateTo);
-        }
-
-        // Get all children for filter dropdown
-        // Updated to use 'assignedSpecialist' based on other routes, assuming that's the correct schema field
-        const children = await Child.find({ assignedSpecialist: req.user._id })
-            .select('name')
-            .sort('name');
-
-        // Get sessions
-        const sessions = await Progress.find(filter)
-            .populate('child', 'name avatar')
-            .sort('-date')
-            .limit(100);
+        const { sessions, children } = response.data.success ? response.data : { sessions: [], children: [] };
 
         res.render('specialist/sessions', {
             title: res.locals.__('sessionsLog') || 'سجل الجلسات',
-            sessions,
-            children,
+            sessions: sessions || [],
+            children: children || [],
             selectedChild: child || '',
             childIdInput: childId || '', // Pass back the manual input
             dateFrom: dateFrom || '',
@@ -916,10 +529,11 @@ router.get('/sessions', async (req, res) => {
             activePage: 'sessions'
         });
     } catch (error) {
-        console.error(error);
+        console.error('Sessions Log Error:', error.message);
         req.flash('error_msg', 'Error loading sessions');
         res.redirect('/specialist');
     }
 });
 
 module.exports = router;
+

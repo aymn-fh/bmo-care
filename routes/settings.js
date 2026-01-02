@@ -1,16 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const Setting = require('../models/Setting');
+const apiClient = require('../utils/apiClient');
 const { ensureAdmin } = require('../middleware/auth');
 
 // Get Settings Page
 router.get('/', ensureAdmin, async (req, res) => {
     try {
-        const settingsList = await Setting.find();
-
-        // Convert array to object for easier access in view
-        const settings = {};
-        settingsList.forEach(s => settings[s.key] = s.value);
+        const response = await apiClient.authGet(req, '/admin/settings');
+        const settings = response.data.success ? response.data.settings : {};
 
         // Default values
         const defaults = {
@@ -27,7 +24,7 @@ router.get('/', ensureAdmin, async (req, res) => {
             activePage: 'settings'
         });
     } catch (error) {
-        console.error(error);
+        console.error('Settings View Error:', error.message);
         req.flash('error_msg', 'Error loading settings');
         res.redirect('/admin');
     }
@@ -42,19 +39,20 @@ router.post('/', ensureAdmin, async (req, res) => {
         if (!updates.maintenanceMode) updates.maintenanceMode = false;
         else updates.maintenanceMode = true;
 
-        const promises = Object.keys(updates).map(key => {
-            return Setting.set(key, updates[key]);
-        });
+        const response = await apiClient.authPost(req, '/admin/settings', updates);
 
-        await Promise.all(promises);
-
-        req.flash('success_msg', 'Settings updated successfully');
+        if (response.data.success) {
+            req.flash('success_msg', 'Settings updated successfully');
+        } else {
+            req.flash('error_msg', response.data.message || 'Error updating settings');
+        }
         res.redirect('/settings');
     } catch (error) {
-        console.error(error);
+        console.error('Settings Update Error:', error.message);
         req.flash('error_msg', 'Error updating settings');
         res.redirect('/settings');
     }
 });
 
 module.exports = router;
+
