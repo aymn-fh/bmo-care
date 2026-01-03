@@ -8,13 +8,12 @@ const path = require('path');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const app = express();
-const BACKEND_URL = process.env.BACKEND_URL;
-console.log('BACKEND_URL =', BACKEND_URL);
 
-if (!BACKEND_URL) {
-    console.error('❌ BACKEND_URL is missing');
-    process.exit(1);
-}
+// Normalize backend URL and provide a sane default for local dev.
+const normalizeBackendUrl = (raw) => (raw || 'http://localhost:8080').replace(/\/$/, '');
+const BACKEND_URL = normalizeBackendUrl(process.env.BACKEND_URL);
+process.env.BACKEND_URL = BACKEND_URL; // Keep other modules (apiClient, serverCheck) in sync.
+console.log('BACKEND_URL =', BACKEND_URL);
 
 // Proxy API
 app.use('/api', createProxyMiddleware({

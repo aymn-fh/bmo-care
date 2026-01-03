@@ -10,7 +10,7 @@ module.exports = async (req, res, next) => {
     }
 
     const currentTime = Date.now();
-    const backendUrl = process.env.BACKEND_URL;
+    const backendUrl = (process.env.BACKEND_URL || 'http://localhost:8080').replace(/\/$/, '');
 
     // Return cached status if within duration
     if (isServerUp && (currentTime - lastCheckTime < CACHE_DURATION)) {

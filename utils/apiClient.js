@@ -1,7 +1,10 @@
 const axios = require('axios');
 
+// Normalize and fallback to local dev backend if env is missing.
+const backendUrl = (process.env.BACKEND_URL || 'http://localhost:8080').replace(/\/$/, '');
+
 const apiClient = axios.create({
-    baseURL: process.env.BACKEND_URL + '/api',
+    baseURL: `${backendUrl}/api`,
     timeout: 10000,
     headers: {
         'Content-Type': 'application/json'
