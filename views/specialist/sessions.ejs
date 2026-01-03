@@ -110,7 +110,7 @@
                                     <td>
                                         <div class="cell-with-icon">
                                             <% if (session.child.avatar) { %>
-                                                <img src="/uploads/<%= session.child.avatar %>"
+                                                                <img src="<%= uploadUrl(session.child.avatar) %>"
                                                     alt="<%= session.child.name %>" class="avatar-small">
                                                 <% } else { %>
                                                     <div class="avatar-circle">

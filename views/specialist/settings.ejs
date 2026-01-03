@@ -29,7 +29,7 @@
                     <div class="profile-photo-section">
                         <div class="profile-photo-wrapper">
                             <% if (user.profilePhoto) { %>
-                                <img src="/uploads/profiles/<%= user.profilePhoto %>" alt="Profile"
+                                    <img src="<%= uploadUrl(user.profilePhoto) %>" alt="Profile"
                                     class="profile-photo-large">
                                 <% } else { %>
                                     <div class="profile-photo-placeholder">

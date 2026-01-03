@@ -74,6 +74,20 @@ app.use((req, res, next) => {
     next();
 });
 
+// Media helper so views can build absolute URLs for uploads
+const buildUploadUrl = (value) => {
+    if (!value) return '';
+    if (value.startsWith('http://') || value.startsWith('https://')) return value;
+    const cleaned = value.replace(/^\/+/, '').replace(/^uploads\/+/, '');
+    return `${BACKEND_URL}/uploads/${cleaned}`;
+};
+
+app.use((req, res, next) => {
+    res.locals.uploadUrl = buildUploadUrl;
+    res.locals.uploadBase = `${BACKEND_URL}/uploads`;
+    next();
+});
+
 // Globals
 app.use((req, res, next) => {
     res.locals.user = req.user || null;

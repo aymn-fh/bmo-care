@@ -377,7 +377,7 @@
                                                     <%= displayText %>
                                             </div>
                                             <% } else { %>
-                                                <img src="/uploads/words/<%= word.image %>" alt="<%= word.text %>"
+                                                <img src="<%= uploadUrl(word.image) %>" alt="<%= word.text %>"
                                                     loading="lazy">
                                                 <% } %>
 
