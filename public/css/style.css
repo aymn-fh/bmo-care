@@ -3564,6 +3564,33 @@ body {
   gap: 1rem;
 }
 
+.chat-hint {
+  margin-top: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--gray-500);
+}
+
+.cancel-edit-btn {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: var(--bg-body);
+  color: var(--gray-700);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.125rem;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.cancel-edit-btn:hover {
+  background: var(--gray-100);
+  color: var(--text-primary);
+}
+
 .chat-input-area textarea {
   flex: 1;
   padding: 0.875rem 1rem;
@@ -3597,6 +3624,18 @@ body {
 .send-btn:hover {
   background: var(--primary-hover);
   transform: scale(1.1);
+}
+
+.message.message-sending {
+  opacity: 0.85;
+}
+
+.message.message-failed {
+  opacity: 0.9;
+}
+
+.message.message-failed .message-meta {
+  color: var(--danger);
 }
 
 /* ======================================

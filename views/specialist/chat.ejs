@@ -79,10 +79,18 @@
 
                             <textarea id="messageInput" placeholder="اكتب رسالتك..." rows="1"></textarea>
 
+                            <button type="button" class="cancel-edit-btn" id="cancelEditBtn" title="إلغاء التعديل" style="display: none;">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+
                             <button type="submit" class="send-btn" id="sendBtn">
                                 <i class="fa-solid fa-paper-plane"></i>
                             </button>
                         </form>
+
+                        <div class="chat-hint" id="chatHint" style="display: none;">
+                            لتعديل أو حذف رسالة: مرّر على الرسالة واضغط القلم أو سلة المهملات. التعديل متاح لمدة 5 دقائق.
+                        </div>
                     </div>
                 </div>
             </div>
@@ -106,30 +114,41 @@
         });
 
         // State
+        const currentUserId = '<%= user._id %>';
         let currentChatUserId = null;
         let conversations = [];
         let typingTimeout;
+        let parentsCache = null;
+        let conversationsRefreshTimer = null;
 
         // Load conversations on page load
         loadConversations();
 
         // Listen for new messages
         socket.on('new_message', (message) => {
-            if (message.sender._id === currentChatUserId || message.receiver._id === currentChatUserId) {
+            const otherUserId = getOtherUserIdFromMessage(message);
+            if (otherUserId && (otherUserId === currentChatUserId)) {
                 appendMessage(message);
+                // Seen marking is best-effort; don't force a full conversations reload.
                 markMessagesAsSeen(currentChatUserId);
             }
-            loadConversations(); // Refresh conversation list
+
+            upsertConversationFromMessage(message);
+            renderConversations(conversations);
         });
 
         // Listen for message edits
         socket.on('message_edited', (message) => {
             updateMessage(message);
+            upsertConversationFromMessage(message);
+            renderConversations(conversations);
         });
 
         // Listen for message deletions
         socket.on('message_deleted', (data) => {
             removeMessage(data.messageId);
+            // If last message was deleted, refresh from server (debounced)
+            scheduleConversationsRefresh();
         });
 
         // Listen for typing indicator
@@ -139,7 +158,75 @@
             }
         });
 
-        // Load conversations and all linked parents
+        async function fetchParentsOnce() {
+            if (parentsCache) return parentsCache;
+            try {
+                const parentsResponse = await fetch('/specialist/api/parents');
+                const parentsData = await parentsResponse.json();
+                parentsCache = (parentsData && parentsData.success) ? (parentsData.parents || []) : [];
+                return parentsCache;
+            } catch (e) {
+                console.error('Error loading parents:', e);
+                parentsCache = [];
+                return parentsCache;
+            }
+        }
+
+        function scheduleConversationsRefresh() {
+            if (conversationsRefreshTimer) return;
+            conversationsRefreshTimer = setTimeout(async () => {
+                conversationsRefreshTimer = null;
+                await loadConversations();
+            }, 250);
+        }
+
+        function getOtherUserIdFromMessage(message) {
+            const senderId = (typeof message.sender === 'string') ? message.sender : message.sender?._id;
+            const receiverId = (typeof message.receiver === 'string') ? message.receiver : message.receiver?._id;
+            if (!senderId || !receiverId) return null;
+            return senderId === currentUserId ? receiverId : senderId;
+        }
+
+        function upsertConversationFromMessage(message) {
+            const otherUserId = getOtherUserIdFromMessage(message);
+            if (!otherUserId) return;
+
+            const text = (message.content ?? message.message ?? '').toString();
+            const createdAt = message.createdAt || new Date().toISOString();
+
+            const idx = conversations.findIndex(c => c?.user?._id?.toString() === otherUserId.toString());
+            if (idx >= 0) {
+                const conv = conversations[idx];
+                conv.lastMessage = {
+                    content: text,
+                    createdAt,
+                    isFromMe: ((typeof message.sender === 'string') ? message.sender : message.sender?._id) === currentUserId
+                };
+
+                const isIncoming = ((typeof message.receiver === 'string') ? message.receiver : message.receiver?._id) === currentUserId;
+                if (isIncoming && currentChatUserId !== otherUserId.toString()) {
+                    conv.unreadCount = (conv.unreadCount || 0) + 1;
+                }
+                if (!isIncoming || currentChatUserId === otherUserId.toString()) {
+                    conv.unreadCount = 0;
+                }
+            } else {
+                // If the conversation isn't known yet, fall back to a debounced server refresh.
+                scheduleConversationsRefresh();
+                return;
+            }
+
+            conversations = conversations.sort((a, b) => {
+                if (a.lastMessage && b.lastMessage) {
+                    return new Date(b.lastMessage.createdAt) - new Date(a.lastMessage.createdAt);
+                }
+                if (a.lastMessage) return -1;
+                if (b.lastMessage) return 1;
+                return a.user.name.localeCompare(b.user.name);
+            });
+        }
+
+        // Load conversations and all linked parents (parents are cached)
         async function loadConversations() {
             try {
                 // 1. Fetch active conversations
@@ -150,17 +237,8 @@
                     activeConversations = convData.conversations;
                 }
 
-                // 2. Fetch all linked parents
-                const parentsResponse = await fetch('/specialist/api/parents');
-                const parentsData = await parentsResponse.json();
-                let allParents = [];
-                if (parentsData.success) {
-                    allParents = parentsData.parents;
-                }
-
-                // Add logging and safer merge
-                console.log('Active Conversations:', activeConversations);
-                console.log('All Parents:', allParents);
+                // 2. Fetch all linked parents (cached)
+                const allParents = await fetchParentsOnce();
 
                 // 3. Merge lists
                 const conversationMap = new Map();
@@ -182,8 +260,6 @@
                         });
                     }
                 });
-
-                console.log('Merged size:', conversationMap.size);
 
                 // Convert map back to array and sort
                 // Active conversations (with lastMessage) come first, sorted by date
@@ -256,6 +332,9 @@
         async function openChat(userId, userName, userPhoto) {
             currentChatUserId = userId;
             document.getElementById('selectedUserId').value = userId;
+            // UI hint becomes relevant once a chat is open
+            const hint = document.getElementById('chatHint');
+            if (hint) hint.style.display = 'block';
 
             // Update UI
             document.getElementById('chatEmptyState').style.display = 'none';
@@ -287,7 +366,7 @@
         // Render messages
         function renderMessages(messages) {
             const container = document.getElementById('chatMessages');
-            const currentUserId = '<%= user._id %>';
+            // currentUserId is global
 
             container.innerHTML = messages.map(msg => {
                                 const senderId = (typeof msg.sender === 'string') ? msg.sender : msg.sender?._id;
@@ -326,7 +405,6 @@
         // Append new message
         function appendMessage(message) {
             const container = document.getElementById('chatMessages');
-            const currentUserId = '<%= user._id %>';
                         const senderId = (typeof message.sender === 'string') ? message.sender : message.sender?._id;
                         const isMine = senderId === currentUserId;
                         const text = (message.content ?? message.message ?? '').toString();
@@ -343,7 +421,7 @@
       <span class="message-time">${formatTime(message.createdAt)}</span>
             ${isRead ? '<i class="fa-solid fa-check-double seen"></i>' : '<i class="fa-solid fa-check"></i>'}
     </div>
-    ${isMine ? `
+        ${isMine && canEditMessage(message.createdAt) ? `
       <div class="message-actions">
                 <button onclick="editMessage('${message._id}', ${JSON.stringify(text)})" title="تعديل">
           <i class="fa-solid fa-pen"></i>
@@ -359,6 +437,83 @@
             container.scrollTop = container.scrollHeight;
         }
 
+        function setEditingMode(isEditing) {
+            const cancelBtn = document.getElementById('cancelEditBtn');
+            const sendBtn = document.getElementById('sendBtn');
+            if (cancelBtn) cancelBtn.style.display = isEditing ? 'flex' : 'none';
+            if (sendBtn) sendBtn.innerHTML = isEditing ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-solid fa-paper-plane"></i>';
+        }
+
+        function createOptimisticMessageElement(tempId, text) {
+            const container = document.getElementById('chatMessages');
+
+            const messageEl = document.createElement('div');
+            messageEl.className = 'message message-mine message-sending';
+            messageEl.setAttribute('data-message-id', tempId);
+            messageEl.innerHTML = `
+                <div class="message-content">
+                    <p>${escapeHtml(text)}</p>
+                </div>
+                <div class="message-meta">
+                    <span class="message-time">الآن</span>
+                    <span class="message-send-state"><i class="fa-solid fa-clock"></i></span>
+                </div>
+            `;
+
+            container.appendChild(messageEl);
+            container.scrollTop = container.scrollHeight;
+
+            return messageEl;
+        }
+
+        function finalizeOptimisticMessage(tempId, savedMessage) {
+            const messageEl = document.querySelector(`[data-message-id="${tempId}"]`);
+            if (!messageEl) {
+                // If it's missing for any reason, just append normally.
+                appendMessage(savedMessage);
+                return;
+            }
+
+            messageEl.classList.remove('message-sending');
+            messageEl.setAttribute('data-message-id', savedMessage._id);
+
+            const timeEl = messageEl.querySelector('.message-time');
+            if (timeEl) timeEl.textContent = formatTime(savedMessage.createdAt);
+
+            const stateEl = messageEl.querySelector('.message-send-state');
+            if (stateEl) {
+                const isRead = !!(savedMessage.isRead || savedMessage.seen);
+                stateEl.innerHTML = isRead ? '<i class="fa-solid fa-check-double seen"></i>' : '<i class="fa-solid fa-check"></i>';
+                stateEl.classList.remove('message-send-state');
+            }
+
+            // Add actions after server ack (respects edit window)
+            if (canEditMessage(savedMessage.createdAt) && !messageEl.querySelector('.message-actions')) {
+                const text = (savedMessage.content ?? savedMessage.message ?? '').toString();
+                const actions = document.createElement('div');
+                actions.className = 'message-actions';
+                actions.innerHTML = `
+                    <button onclick="editMessage('${savedMessage._id}', ${JSON.stringify(text)})" title="تعديل">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                    <button onclick="deleteMessage('${savedMessage._id}')" title="حذف">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                `;
+                messageEl.appendChild(actions);
+            }
+        }
+
+        function failOptimisticMessage(tempId) {
+            const messageEl = document.querySelector(`[data-message-id="${tempId}"]`);
+            if (!messageEl) return;
+            messageEl.classList.remove('message-sending');
+            messageEl.classList.add('message-failed');
+            const stateEl = messageEl.querySelector('.message-send-state');
+            if (stateEl) stateEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+            messageEl.title = 'فشل إرسال الرسالة';
+        }
+
         // Send message
         document.getElementById('messageForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -370,38 +525,66 @@
 
             if (!message || !receiverId) return;
 
+            // Clear immediately for a faster feel
+            input.value = '';
+            input.style.height = 'auto';
+
             try {
                 if (editingId) {
-                    // Edit message
                     const response = await fetch(`/chat/${editingId}/edit`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ message })
                     });
 
-                    if (response.ok) {
-                        document.getElementById('editingMessageId').value = '';
-                        document.getElementById('sendBtn').innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+                    const data = await response.json().catch(() => ({}));
+                    if (response.ok && data && data.success && data.message) {
+                        updateMessage(data.message);
+                        upsertConversationFromMessage(data.message);
+                        renderConversations(conversations);
                     }
-                } else {
-                    // Send new message
-                    const response = await fetch('/chat/send', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ receiverId, message })
-                    });
 
-                    const data = await response.json();
-                    if (data.success) {
-                        appendMessage(data.message);
-                    }
+                    document.getElementById('editingMessageId').value = '';
+                    setEditingMode(false);
+                    return;
                 }
 
-                input.value = '';
-                input.style.height = 'auto';
+                const tempId = `tmp_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+                createOptimisticMessageElement(tempId, message);
+
+                // Update conversation preview instantly
+                upsertConversationFromMessage({
+                    sender: currentUserId,
+                    receiver: receiverId,
+                    content: message,
+                    createdAt: new Date().toISOString(),
+                });
+                renderConversations(conversations);
+
+                const response = await fetch('/chat/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ receiverId, message })
+                });
+
+                const data = await response.json().catch(() => ({}));
+                if (response.ok && data && data.success && data.message) {
+                    finalizeOptimisticMessage(tempId, data.message);
+                } else {
+                    failOptimisticMessage(tempId);
+                }
             } catch (error) {
                 console.error('Error sending message:', error);
+                // Best-effort: mark optimistic message as failed
+                // (if we never created it, this is a no-op)
             }
+        });
+
+        // Cancel edit
+        document.getElementById('cancelEditBtn').addEventListener('click', () => {
+            document.getElementById('editingMessageId').value = '';
+            document.getElementById('messageInput').value = '';
+            setEditingMode(false);
         });
 
         // Auto-resize textarea
@@ -428,7 +611,7 @@
         function editMessage(messageId, currentText) {
             document.getElementById('editingMessageId').value = messageId;
             document.getElementById('messageInput').value = currentText;
-            document.getElementById('sendBtn').innerHTML = '<i class="fa-solid fa-check"></i>';
+            setEditingMode(true);
             document.getElementById('messageInput').focus();
         }
 
@@ -466,6 +649,15 @@
                     contentEl.textContent = (message.content ?? message.message ?? '').toString();
                 }
 
+                // Ensure actions match edit window
+                const senderId = (typeof message.sender === 'string') ? message.sender : message.sender?._id;
+                const isMine = senderId === currentUserId;
+                const shouldShowActions = isMine && canEditMessage(message.createdAt);
+                const existingActions = messageEl.querySelector('.message-actions');
+                if (!shouldShowActions && existingActions) {
+                    existingActions.remove();
+                }
+
                 // Add edited indicator
                 if (!messageEl.querySelector('.message-edited')) {
                     messageEl.querySelector('.message-content').innerHTML += '<span class="message-edited">معدلة</span>';
@@ -477,7 +669,12 @@
         async function markMessagesAsSeen(userId) {
             try {
                 await fetch(`/chat/${userId}/seen`, { method: 'PUT' });
-                loadConversations();
+                // Keep UI snappy: just clear unread locally.
+                const idx = conversations.findIndex(c => c?.user?._id?.toString() === userId.toString());
+                if (idx >= 0) {
+                    conversations[idx].unreadCount = 0;
+                    renderConversations(conversations);
+                }
             } catch (error) {
                 console.error('Error marking messages as seen:', error);
             }
