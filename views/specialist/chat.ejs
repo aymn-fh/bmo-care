@@ -290,20 +290,24 @@
             const currentUserId = '<%= user._id %>';
 
             container.innerHTML = messages.map(msg => {
-                const isMine = msg.sender._id === currentUserId;
+                                const senderId = (typeof msg.sender === 'string') ? msg.sender : msg.sender?._id;
+                                const isMine = senderId === currentUserId;
+                                const text = (msg.content ?? msg.message ?? '').toString();
+                                const isEdited = !!(msg.isEdited || msg.edited || (msg.updatedAt && msg.createdAt && (new Date(msg.updatedAt) > new Date(msg.createdAt))));
+                                const isRead = !!(msg.isRead || msg.seen);
                 return `
       <div class="message ${isMine ? 'message-mine' : 'message-theirs'}" data-message-id="${msg._id}">
         <div class="message-content">
-          <p>${escapeHtml(msg.message)}</p>
-          ${msg.edited ? '<span class="message-edited">معدلة</span>' : ''}
+                    <p>${escapeHtml(text)}</p>
+                    ${isEdited ? '<span class="message-edited">معدلة</span>' : ''}
         </div>
         <div class="message-meta">
           <span class="message-time">${formatTime(msg.createdAt)}</span>
-          ${msg.seen ? '<i class="fa-solid fa-check-double seen"></i>' : '<i class="fa-solid fa-check"></i>'}
+                    ${isRead ? '<i class="fa-solid fa-check-double seen"></i>' : '<i class="fa-solid fa-check"></i>'}
         </div>
         ${isMine && canEditMessage(msg.createdAt) ? `
           <div class="message-actions">
-            <button onclick="editMessage('${msg._id}', '${escapeHtml(msg.message)}')" title="تعديل">
+                        <button onclick="editMessage('${msg._id}', ${JSON.stringify(text)})" title="تعديل">
               <i class="fa-solid fa-pen"></i>
             </button>
             <button onclick="deleteMessage('${msg._id}')" title="حذف">
@@ -323,22 +327,25 @@
         function appendMessage(message) {
             const container = document.getElementById('chatMessages');
             const currentUserId = '<%= user._id %>';
-            const isMine = message.sender._id === currentUserId;
+                        const senderId = (typeof message.sender === 'string') ? message.sender : message.sender?._id;
+                        const isMine = senderId === currentUserId;
+                        const text = (message.content ?? message.message ?? '').toString();
+                        const isRead = !!(message.isRead || message.seen);
 
             const messageEl = document.createElement('div');
             messageEl.className = `message ${isMine ? 'message-mine' : 'message-theirs'}`;
             messageEl.setAttribute('data-message-id', message._id);
             messageEl.innerHTML = `
     <div class="message-content">
-    <p>${escapeHtml(message.content)}</p>
+        <p>${escapeHtml(text)}</p>
     </div>
     <div class="message-meta">
       <span class="message-time">${formatTime(message.createdAt)}</span>
-      ${message.seen ? '<i class="fa-solid fa-check-double seen"></i>' : '<i class="fa-solid fa-check"></i>'}
+            ${isRead ? '<i class="fa-solid fa-check-double seen"></i>' : '<i class="fa-solid fa-check"></i>'}
     </div>
     ${isMine ? `
       <div class="message-actions">
-        <button onclick="editMessage('${message._id}', '${escapeHtml(message.content)}')" title="تعديل">
+                <button onclick="editMessage('${message._id}', ${JSON.stringify(text)})" title="تعديل">
           <i class="fa-solid fa-pen"></i>
         </button>
         <button onclick="deleteMessage('${message._id}')" title="حذف">
@@ -456,7 +463,7 @@
             if (messageEl) {
                 const contentEl = messageEl.querySelector('.message-content p');
                 if (contentEl) {
-                    contentEl.textContent = message.content;
+                    contentEl.textContent = (message.content ?? message.message ?? '').toString();
                 }
 
                 // Add edited indicator
