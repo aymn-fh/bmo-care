@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
+const MongoStore = require('connect-mongo');
 const passport = require('passport');
 const flash = require('connect-flash');
 const cookieParser = require('cookie-parser');
@@ -50,11 +51,24 @@ app.use('/uploads', (req, res) => {
 });
 
 // Session
-app.use(session({
+const sessionOptions = {
     secret: process.env.SESSION_SECRET || 'keyboard_cat',
     resave: false,
     saveUninitialized: false
-}));
+};
+
+// Production-ready session store (optional)
+// Set one of: SESSION_MONGO_URL, MONGO_URI, MONGODB_URI
+const sessionMongoUrl = process.env.SESSION_MONGO_URL || process.env.MONGO_URI || process.env.MONGODB_URI;
+if (sessionMongoUrl) {
+    app.set('trust proxy', 1); // required on many hosted platforms when behind a proxy
+    sessionOptions.store = MongoStore.create({
+        mongoUrl: sessionMongoUrl,
+        ttl: 14 * 24 * 60 * 60 // 14 days
+    });
+}
+
+app.use(session(sessionOptions));
 
 // Passport
 require('./config/passport')(passport);
