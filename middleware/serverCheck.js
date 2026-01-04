@@ -3,6 +3,7 @@ const https = require('https');
 let isServerUp = true;
 let lastCheckTime = 0;
 const CACHE_DURATION = 10000; // Check every 10 seconds
+let healthCheckInFlight = false;
 
 const checkHealth = async (target) => {
     try {
@@ -52,27 +53,37 @@ module.exports = async (req, res, next) => {
         return next();
     }
 
-    const targets = withFallbackProtocols(backendUrl);
-    let lastResult = null;
+    // Never block the request waiting for backend checks (Railway health checks are time-sensitive)
+    res.locals.backendDown = !isServerUp;
 
-    for (const target of targets) {
-        const result = await checkHealth(target);
-        lastResult = { target, ...result };
+    if (!healthCheckInFlight) {
+        healthCheckInFlight = true;
+        lastCheckTime = currentTime;
 
-        if (result.ok) {
-            isServerUp = true;
-            lastCheckTime = currentTime;
-            res.locals.backendDown = false;
-            return next();
-        }
+        (async () => {
+            const targets = withFallbackProtocols(backendUrl);
+            let ok = false;
 
-        // log each failed attempt with status/body info
-        console.error(`❌ Backend health check failed (${target}): status=${result.status || 'n/a'} body=${result.data ? JSON.stringify(result.data).slice(0,200) : ''} ${result.message ? `error=${result.message}` : ''}`);
+            for (const target of targets) {
+                const result = await checkHealth(target);
+                if (result.ok) {
+                    ok = true;
+                    break;
+                }
+
+                console.error(
+                    `❌ Backend health check failed (${target}): status=${result.status || 'n/a'} body=${result.data ? JSON.stringify(result.data).slice(0, 200) : ''} ${result.message ? `error=${result.message}` : ''}`
+                );
+            }
+
+            isServerUp = ok;
+            healthCheckInFlight = false;
+        })().catch((err) => {
+            console.error('❌ Backend health check background error:', err.message);
+            isServerUp = false;
+            healthCheckInFlight = false;
+        });
     }
 
-    // Mark down but don't block the user; let downstream routes attempt and show their own errors
-    lastCheckTime = currentTime;
-    isServerUp = false;
-    res.locals.backendDown = true;
     return next();
 };
