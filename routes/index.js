@@ -7,7 +7,12 @@ router.get('/', (req, res) => {
     if (req.isAuthenticated()) {
         return redirectByRole(req, res);
     }
-    res.redirect('/auth/login');
+
+    // Return 200 on `/` (avoid health-check failures on 302 redirects in some hosts)
+    return res.render('auth/login', {
+        title: res.locals.__('loginTitle'),
+        layout: false
+    });
 });
 
 module.exports = router;
