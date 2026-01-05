@@ -8,7 +8,7 @@
                 <%= __('cancelLink') %>
             </button>
             <form id="unlinkForm" action="/specialist/parents/<%= parent._id %>/unlink" method="POST"
-                style="display: none;" onsubmit="return confirm('<%= __('confirmUnlinkParent') %>')">
+                style="display: none;" data-confirm="<%= __('confirmUnlinkParent') %>" onsubmit="return confirm(this.dataset.confirm)">
             </form>
 
             <a href="/specialist/parents" class="btn-back-clean">
@@ -17,47 +17,18 @@
             </a>
         </div>
 
-        <!-- Hero Card (Blue) -->
+        <!-- Hero Card (Profile Header) -->
         <div class="hero-card">
-            <!-- Right Side: Info -->
-            <div class="info-side">
-                <% if (parent.profilePhoto) { %>
-                    <div style="margin-bottom: 1rem; align-self: flex-end;">
-                        <img src="/<%= parent.profilePhoto.replace(/\\/g, '/') %>" alt="<%= parent.name %>"
-                            style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1);">
-                    </div>
-                    <% } else { %>
-                        <!-- Default Icon if no photo -->
-                        <div
-                            style="margin-bottom: 1rem; align-self: flex-end; width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; border: 4px solid rgba(255,255,255,0.3);">
-                            <i class="fas fa-user" style="font-size: 3rem; color: white;"></i>
-                        </div>
-                        <% } %>
-
-                            <span class="label-small">
-                                <%= __('parentInfo') %>:
-                            </span>
-                            <h1 class="parent-name-large">
-                                <%= parent.name %>
-                            </h1>
-                            <div class="parent-email-small">
-                                <%= parent.email %>
-                            </div>
-            </div>
-
             <!-- Left Side: 3 Action Squares -->
-            <div class="actions-side">
-                <!-- Chat Square -->
+            <div class="hero-actions">
                 <a href="/specialist/chat/init/<%= parent._id %>" class="action-square" title="محادثة مباشرة">
                     <i class="fas fa-comments"></i>
                 </a>
 
-                <!-- Email Square -->
                 <a href="mailto:<%= parent.email %>" class="action-square" title="إرسال بريد">
                     <i class="fas fa-envelope"></i>
                 </a>
 
-                <!-- Phone Square -->
                 <% if (parent.phone) { %>
                     <a href="tel:<%= parent.phone %>" class="action-square" title="اتصال">
                         <i class="fas fa-phone"></i>
@@ -66,6 +37,28 @@
                         <div class="action-square disabled" title="لا يوجد هاتف">
                             <i class="fas fa-phone-slash"></i>
                         </div>
+                        <% } %>
+            </div>
+
+            <!-- Middle: Text -->
+            <div class="hero-content">
+                <div class="hero-kicker">
+                    <%= __('parentInfo') %> :
+                </div>
+                <h1 class="hero-title">
+                    <%= parent.name %>
+                </h1>
+                <div class="hero-subtitle">
+                    <%= parent.email %>
+                </div>
+            </div>
+
+            <!-- Right Side: Avatar -->
+            <div class="hero-avatar">
+                <% if (parent.profilePhoto) { %>
+                    <img src="/<%= parent.profilePhoto.replace(/\\/g, '/') %>" alt="<%= parent.name %>">
+                    <% } else { %>
+                        <i class="fas fa-user"></i>
                         <% } %>
             </div>
         </div>
@@ -177,10 +170,9 @@
             background: #fee2e2;
         }
 
-        /* Hero Card (Blue Theme) */
+        /* Hero Card (Profile Header) */
         .hero-card {
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-            /* Primary Blue Gradient */
+            background: linear-gradient(135deg, var(--bg-sidebar) 0%, var(--primary) 55%, var(--primary-hover) 100%);
             border-radius: 24px;
             padding: 3rem 4rem;
             display: flex;
@@ -190,70 +182,95 @@
             margin-bottom: 4rem;
             min-height: 220px;
             direction: rtl;
-            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.25);
+            box-shadow: var(--shadow-lg);
         }
 
-        /* Right Side (Info) */
-        .info-side {
-            text-align: right;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .label-small {
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.9);
-            font-weight: 400;
-            margin-bottom: 0.5rem;
-        }
-
-        .parent-name-large {
-            font-size: 3.5rem;
-            font-weight: 400;
-            margin: 0 0 0.5rem 0;
-            line-height: 1.1;
-        }
-
-        .parent-email-small {
-            font-size: 1rem;
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        /* Left Side (Action Squares) */
-        .actions-side {
+        .hero-actions {
             display: flex;
             gap: 1.5rem;
             align-items: center;
         }
 
-        .action-square {
-            width: 80px;
-            height: 80px;
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 20px;
+        .hero-content {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0 1rem;
+            flex: 1;
+        }
+
+        .hero-kicker {
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 400;
+        }
+
+        .hero-title {
+            font-size: 3.25rem;
+            font-weight: 400;
+            margin: 0;
+            line-height: 1.1;
+        }
+
+        .hero-subtitle {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .hero-avatar {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-size: 1.8rem;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.15);
+            border: 4px solid rgba(255, 255, 255, 0.28);
+            flex: 0 0 auto;
+        }
+
+        .hero-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .hero-avatar i {
+            font-size: 3rem;
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .action-square {
+            width: 78px;
+            height: 78px;
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--bg-sidebar);
+            font-size: 1.65rem;
             transition: all 0.2s ease;
             text-decoration: none;
             backdrop-filter: blur(5px);
         }
 
         .action-square:hover {
-            background: white;
-            color: #2563eb;
-            transform: scale(1.05);
-            border-color: white;
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--primary-hover);
+            transform: scale(1.04);
+            border-color: rgba(0, 0, 0, 0.16);
         }
 
         .action-square.disabled {
-            background: rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.25);
+            color: rgba(255, 255, 255, 0.7);
             cursor: default;
-            border: none;
+            border: 1px solid rgba(255, 255, 255, 0.12);
         }
 
         .action-square.disabled:hover {
@@ -387,15 +404,16 @@
                 align-items: center;
                 text-align: center;
                 padding: 2rem;
-                gap: 2rem;
+                gap: 1.75rem;
             }
 
-            .info-side {
-                text-align: center;
+            .hero-title {
+                font-size: 2.25rem;
             }
 
-            .actions-side {
+            .hero-actions {
                 justify-content: center;
+                width: 100%;
             }
         }
     </style>
