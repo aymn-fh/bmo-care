@@ -1,19 +1,28 @@
 <%- include('../partials/layout-start', { title: __('sessionsLog'), activePage: 'sessions' }) %>
 
-    <div class="dashboard">
-        <div class="page-header">
-            <h1><i class="fas fa-clipboard-list"></i>
-                <%= __('sessionsLog') %>
-            </h1>
-            <p class="subtitle">
-                <%= __('viewAllProgressReports') %>
-            </p>
+    <div class="sessions-page">
+        <!-- Hero Header -->
+        <div class="sessions-hero">
+            <div class="sessions-hero-text">
+                <div class="sessions-hero-kicker">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span><%= __('sessionsLog') %></span>
+                </div>
+                <div class="sessions-hero-subtitle">
+                    <%= __('viewAllProgressReports') %>
+                </div>
+            </div>
+
+            <div class="sessions-hero-count">
+                <div class="count-number"><%= sessions.length %></div>
+                <div class="count-label"><%= __('session') %></div>
+            </div>
         </div>
 
         <!-- Filters -->
-        <div class="data-section" style="margin-bottom: 2rem;">
+        <div class="sessions-card sessions-filters">
             <form method="GET" action="/specialist/sessions" class="filter-form">
-                <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                <div class="sessions-form-grid">
                     <div class="form-group">
                         <label for="child">
                             <%= __('child') %>
@@ -66,20 +75,21 @@
         </div>
 
         <!-- Progress Reports List -->
-        <div class="data-section">
-            <div class="section-header">
-                <h2><i class="fas fa-file-alt"></i>
+        <div class="sessions-card sessions-list">
+            <div class="sessions-section-header">
+                <h2>
+                    <i class="fas fa-file-alt"></i>
                     <%= __('progressReports') %>
                 </h2>
                 <span class="badge badge-primary">
                     <%= sessions.length %>
-                        <%= __('session') %>
+                    <%= __('session') %>
                 </span>
             </div>
 
             <% if (sessions.length> 0) { %>
                 <div class="table-container">
-                    <table class="data-table">
+                    <table class="data-table sessions-table">
                         <thead>
                             <tr>
                                 <th>
@@ -101,24 +111,25 @@
                         </thead>
                         <tbody>
                             <% sessions.forEach(session=> { %>
+                                <% const childObj = session.child || (children || []).find(c => c._id && c._id.toString() === (selectedChild || childIdInput)); %>
                                 <tr>
                                     <td>
                                         <i class="fas fa-calendar"></i>
-                                        <%= new Date(session.date).toLocaleDateString(currentLang==='ar' ? 'ar-SA'
+                                        <%= new Date(session.sessionDate || session.date).toLocaleDateString(currentLang==='ar' ? 'ar-SA'
                                             : 'en-US' ) %>
                                     </td>
                                     <td>
                                         <div class="cell-with-icon">
-                                            <% if (session.child.avatar) { %>
-                                                                <img src="<%= uploadUrl(session.child.avatar) %>"
-                                                    alt="<%= session.child.name %>" class="avatar-small">
+                                            <% if (childObj && (childObj.avatar || childObj.profilePhoto)) { %>
+                                                <img src="<%= uploadUrl(childObj.avatar || childObj.profilePhoto) %>"
+                                                    alt="<%= childObj.name || __('child') %>" class="avatar-small">
                                                 <% } else { %>
                                                     <div class="avatar-circle">
                                                         <i class="fas fa-child"></i>
                                                     </div>
                                                     <% } %>
                                                         <span>
-                                                            <%= session.child.name %>
+                                                            <%= (childObj && childObj.name) ? childObj.name : (session.childName || '-') %>
                                                         </span>
                                         </div>
                                     </td>
@@ -138,10 +149,14 @@
                                                 <% } %>
                                     </td>
                                     <td>
-                                        <a href="/specialist/child/<%= session.child._id %>" class="btn btn-sm btn-info"
-                                            title="<%= __('view') %>">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
+                                        <% if (childObj && childObj._id) { %>
+                                            <a href="/specialist/child/<%= childObj._id %>" class="btn btn-sm btn-info"
+                                                title="<%= __('view') %>">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <% } else { %>
+                                                <span class="sessions-muted">-</span>
+                                                <% } %>
                                     </td>
                                 </tr>
                                 <% }) %>
@@ -160,6 +175,137 @@
     </div>
 
     <style>
+        .sessions-page {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0.25rem 0;
+        }
+
+        .sessions-hero {
+            background: linear-gradient(135deg, var(--bg-sidebar) 0%, var(--primary) 55%, var(--primary-hover) 100%);
+            border-radius: 24px;
+            padding: 2.25rem 2.5rem;
+            color: #fff;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.5rem;
+            margin-bottom: 1.75rem;
+        }
+
+        .sessions-hero-text {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .sessions-hero-kicker {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.35rem;
+            font-weight: 700;
+        }
+
+        .sessions-hero-kicker i {
+            font-size: 1.2rem;
+            opacity: 0.95;
+        }
+
+        .sessions-hero-subtitle {
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .sessions-hero-count {
+            background: rgba(255, 255, 255, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 18px;
+            padding: 1rem 1.25rem;
+            min-width: 120px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .sessions-hero-count .count-number {
+            font-size: 2.25rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .sessions-hero-count .count-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-top: 0.35rem;
+        }
+
+        .sessions-card {
+            background: var(--bg-card);
+            border: var(--glass-border);
+            box-shadow: var(--shadow-lg);
+            border-radius: 22px;
+            padding: 1.5rem;
+            backdrop-filter: blur(var(--backdrop-blur));
+            -webkit-backdrop-filter: blur(var(--backdrop-blur));
+        }
+
+        .sessions-filters {
+            margin-bottom: 1.25rem;
+        }
+
+        .sessions-form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            align-items: end;
+        }
+
+        .sessions-section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sessions-section-header h2 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .sessions-section-header h2 i {
+            color: var(--primary);
+        }
+
+        .sessions-table {
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .sessions-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background: var(--gray-50);
+        }
+
+        [data-theme="dark"] .sessions-table thead th {
+            background: rgba(15, 23, 42, 0.65);
+        }
+
+        .sessions-muted {
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
         .rating {
             display: flex;
             gap: 0.2rem;
@@ -171,11 +317,7 @@
         }
 
         .rating .fa-star.filled {
-            color: #fbbf24;
-        }
-
-        .filter-form .form-grid {
-            gap: 1rem;
+            color: var(--warning);
         }
 
         .avatar-small {
@@ -183,6 +325,18 @@
             height: 30px;
             border-radius: 50%;
             object-fit: cover;
+        }
+
+        @media (max-width: 900px) {
+            .sessions-hero {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 1.75rem;
+            }
+
+            .sessions-hero-count {
+                width: 100%;
+            }
         }
     </style>
 
