@@ -11,6 +11,14 @@
         href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script>
+        (function () {
+            try {
+                var savedTheme = localStorage.getItem('theme');
+                if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+            } catch (e) { }
+        })();
+    </script>
     <link rel="stylesheet" href="/css/style.css?v=13">
 </head>
 
@@ -32,44 +40,40 @@
                         <div class="carousel-slide">
                             <i class="fas fa-chart-line"></i>
                             <h3>
-                                <%= currentLang==='ar' ? 'تتبع التقدم' : 'Track Progress' %>
+                                <%= __('loginFeatureTrackTitle') %>
                             </h3>
                             <p>
-                                <%= currentLang==='ar' ? 'راقب تطور أداء الأطفال بتقارير مفصلة'
-                                    : 'Monitor performance with detailed reports' %>
+                                <%= __('loginFeatureTrackDesc') %>
                             </p>
                         </div>
                         <!-- Slide 2 -->
                         <div class="carousel-slide">
                             <i class="fas fa-users"></i>
                             <h3>
-                                <%= currentLang==='ar' ? 'إدارة الحالات' : 'Case Management' %>
+                                <%= __('loginFeatureCasesTitle') %>
                             </h3>
                             <p>
-                                <%= currentLang==='ar' ? 'نظّم ملفات الأطفال وأولياء الأمور بسهولة'
-                                    : 'Organize files easily' %>
+                                <%= __('loginFeatureCasesDesc') %>
                             </p>
                         </div>
                         <!-- Slide 3 -->
                         <div class="carousel-slide">
                             <i class="fas fa-gamepad"></i>
                             <h3>
-                                <%= currentLang==='ar' ? 'جلسات تفاعلية' : 'Interactive Sessions' %>
+                                <%= __('loginFeatureSessionsTitle') %>
                             </h3>
                             <p>
-                                <%= currentLang==='ar' ? 'ألعاب تعليمية مصممة لتحسين المهارات'
-                                    : 'Educational games to improve skills' %>
+                                <%= __('loginFeatureSessionsDesc') %>
                             </p>
                         </div>
                         <!-- Slide 4 -->
                         <div class="carousel-slide">
                             <i class="fas fa-bell"></i>
                             <h3>
-                                <%= currentLang==='ar' ? 'إشعارات فورية' : 'Instant Notifications' %>
+                                <%= __('loginFeatureNotificationsTitle') %>
                             </h3>
                             <p>
-                                <%= currentLang==='ar' ? 'ابقَ على اطلاع بكل جديد مع التنبيهات'
-                                    : 'Stay updated with real-time alerts' %>
+                                <%= __('loginFeatureNotificationsDesc') %>
                             </p>
                         </div>
                     </div>

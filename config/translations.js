@@ -55,12 +55,17 @@ module.exports = {
         specialist: 'أخصائي',
         parent: 'ولي أمر',
 
+        reload: 'تحديث الصفحة',
         // Navigation
         home: 'الرئيسية',
         centers: 'المراكز',
         admins: 'الإداريين',
         specialists: 'الأخصائيين',
         parents: 'أولياء الأمور',
+        serverErrorTitle: 'حدث خطأ غير متوقع',
+        serverErrorMessage: 'واجهنا مشكلة في معالجة طلبك. تم تسجيل الخطأ وسنقوم بإصلاحه قريباً.',
+        serviceUnavailableTitle: 'الخدمة غير متاحة حالياً',
+        serviceUnavailableMessage: 'عذراً، لا يمكننا الاتصال بالخادم الرئيسي في الوقت الحالي. قد يكون الخادم قيد الصيانة أو هناك عطل فني. حاول مرة أخرى بعد قليل.',
         children: 'الأطفال',
         analytics: 'التحليلات',
         settings: 'الإعدادات',
@@ -68,6 +73,14 @@ module.exports = {
         messages: 'الرسائل',
         notifications: 'الإشعارات',
         noNotifications: 'لا توجد إشعارات جديدة',
+        loginFeatureTrackTitle: 'تتبع التقدم',
+        loginFeatureTrackDesc: 'راقب تطور أداء الأطفال بتقارير مفصلة',
+        loginFeatureCasesTitle: 'إدارة الحالات',
+        loginFeatureCasesDesc: 'نظّم ملفات الأطفال وأولياء الأمور بسهولة',
+        loginFeatureSessionsTitle: 'جلسات تفاعلية',
+        loginFeatureSessionsDesc: 'ألعاب تعليمية مصممة لتحسين المهارات',
+        loginFeatureNotificationsTitle: 'إشعارات فورية',
+        loginFeatureNotificationsDesc: 'ابقَ على اطلاع بكل جديد مع التنبيهات',
 
         // Super Admin
         centerManagement: 'إدارة المراكز',
@@ -117,12 +130,17 @@ module.exports = {
         pending: 'معلق',
         approved: 'مقبول',
         rejected: 'مرفوض',
+        reload: 'Reload',
 
         // Messages
         createdSuccessfully: 'تم الإنشاء بنجاح',
         updatedSuccessfully: 'تم التحديث بنجاح',
         deletedSuccessfully: 'تم الحذف بنجاح',
         confirmDelete: 'هل أنت متأكد من الحذف؟',
+        serverErrorTitle: 'Unexpected error',
+        serverErrorMessage: 'We had a problem processing your request. The issue has been logged and will be fixed soon.',
+        serviceUnavailableTitle: 'Service unavailable',
+        serviceUnavailableMessage: 'Sorry, we cannot reach the main server right now. It may be under maintenance or experiencing an outage. Please try again shortly.',
         errorOccurred: 'حدث خطأ',
 
         // Errors
@@ -130,6 +148,14 @@ module.exports = {
         pageNotFoundMessage: 'عذراً، الصفحة التي تبحث عنها غير موجودة',
         error: 'خطأ',
         accessDenied: 'الوصول مرفوض',
+        loginFeatureTrackTitle: 'Track progress',
+        loginFeatureTrackDesc: 'Monitor children\'s performance with detailed reports',
+        loginFeatureCasesTitle: 'Case management',
+        loginFeatureCasesDesc: 'Organize children and parents files easily',
+        loginFeatureSessionsTitle: 'Interactive sessions',
+        loginFeatureSessionsDesc: 'Educational games designed to improve skills',
+        loginFeatureNotificationsTitle: 'Instant notifications',
+        loginFeatureNotificationsDesc: 'Stay updated with real-time alerts',
         loginRequired: 'يجب تسجيل الدخول أولاً',
 
         // Form
@@ -323,7 +349,25 @@ module.exports = {
         security: 'الأمان',
         firstName: 'الاسم الأول',
         lastName: 'الاسم الأخير',
-        phoneNumber: 'رقم الهاتف'
+        phoneNumber: 'رقم الهاتف',
+
+        // Extra UI (specialist pages)
+        personalInfo: 'المعلومات الشخصية',
+        bio: 'النبذة التعريفية',
+        basicInfo: 'المعلومات الأساسية',
+        bioDesc: 'أضف نبذة تعريفية عن نفسك وخبراتك',
+        bioLabel: 'نبذة تعريفية (حتى 500 حرف)',
+        bioPlaceholder: 'اكتب نبذة عنك...',
+        passwordStrongHint: 'احرص على استخدام كلمة مرور قوية',
+        passwordMinLengthHint: 'يجب أن تكون 6 أحرف على الأقل',
+        parentOrChildNumber: 'رقم الأب أو الطفل',
+        parentOrChildNumberPlaceholder: 'أدخل رقم الأب أو الطفل...',
+        startChat: 'محادثة مباشرة',
+        sendEmail: 'إرسال بريد',
+        call: 'اتصال',
+        noPhone: 'لا يوجد هاتف',
+        loadParentsError: 'خطأ في تحميل أولياء الأمور',
+        serverConnectionError: 'خطأ في الاتصال بالخادم'
     },
 
     en: {
@@ -616,6 +660,24 @@ module.exports = {
         security: 'Security',
         firstName: 'First Name',
         lastName: 'Last Name',
-        phoneNumber: 'Phone Number'
+        phoneNumber: 'Phone Number',
+
+        // Extra UI (specialist pages)
+        personalInfo: 'Personal info',
+        bio: 'Bio',
+        basicInfo: 'Basic information',
+        bioDesc: 'Add a short bio about your experience',
+        bioLabel: 'Bio (up to 500 characters)',
+        bioPlaceholder: 'Write something about you...',
+        passwordStrongHint: 'Use a strong password',
+        passwordMinLengthHint: 'Must be at least 6 characters',
+        parentOrChildNumber: 'Parent or child number',
+        parentOrChildNumberPlaceholder: 'Enter parent or child number...',
+        startChat: 'Start chat',
+        sendEmail: 'Send email',
+        call: 'Call',
+        noPhone: 'No phone number',
+        loadParentsError: 'Failed to load parents',
+        serverConnectionError: 'Server connection error'
     }
 };

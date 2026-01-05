@@ -1,15 +1,26 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="<%= currentLang %>" dir="<%= isRTL ? 'rtl' : 'ltr' %>">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>الخدمة غير متاحة - BMO Care</title>
+    <title><%= __('serviceUnavailableTitle') %> | <%= __('appName') %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        (function () {
+            try {
+                var savedTheme = localStorage.getItem('theme');
+                if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+            } catch (e) { }
+        })();
+    </script>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
-            color: #343a40;
+            font-family: 'Cairo', sans-serif;
+            background: var(--bg-body);
+            color: var(--text-primary);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -19,10 +30,10 @@
         }
 
         .container {
-            background: white;
+            background: var(--card-bg);
             padding: 40px;
             border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow);
             max-width: 500px;
             width: 90%;
         }
@@ -30,23 +41,23 @@
         .icon {
             font-size: 64px;
             margin-bottom: 20px;
-            color: #dc3545;
+            color: var(--danger);
         }
 
         h1 {
             margin: 0 0 10px;
-            color: #343a40;
+            color: var(--text-primary);
         }
 
         p {
             margin: 0 0 20px;
-            color: #6c757d;
+            color: var(--text-secondary);
             line-height: 1.5;
         }
 
         .btn {
             display: inline-block;
-            background-color: #007bff;
+            background: var(--primary);
             color: white;
             text-decoration: none;
             padding: 10px 20px;
@@ -56,19 +67,20 @@
         }
 
         .btn:hover {
-            background-color: #0056b3;
+            background: var(--primary-hover);
         }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <div class="icon">🔌</div>
-        <h1>الخدمة غير متاحة حالياً</h1>
-        <p>عذراً، لا يمكننا الاتصال بالخادم الرئيسي في الوقت الحالي.<br>قد يكون الخادم قيد الصيانة أو هناك عطل فني.</p>
-        <p>يرجى المحاولة مرة أخرى بعد قليل.</p>
-        <a href="/" class="btn">تحديث الصفحة</a>
+        <div class="icon"><i class="fas fa-plug"></i></div>
+        <h1><%= __('serviceUnavailableTitle') %></h1>
+        <p><%= __('serviceUnavailableMessage') %></p>
+        <a href="/" class="btn"><%= __('reload') %></a>
     </div>
+
+    <script src="/js/main.js"></script>
 </body>
 
 </html>

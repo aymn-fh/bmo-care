@@ -11,7 +11,7 @@
     <div class="search-container" style="max-width: 600px; margin: 0 auto 3rem auto; position: relative;">
         <i class="fas fa-search"
             style="position: absolute; left: 1.5rem; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 1.2rem; pointer-events: none;"></i>
-        <input type="text" id="parentSearch" placeholder="<%= __('searchByName') || 'Search by name...' %>"
+        <input type="text" id="parentSearch" placeholder="<%= __('searchByName') %>"
             style="width: 100%; padding: 1rem 1rem 1rem 3.5rem; border-radius: 16px; border: 2px solid #e2e8f0; font-size: 1rem; transition: all 0.3s ease; outline: none; background: #fff;"
             onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 4px rgba(59, 130, 246, 0.1)';"
             onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none';">
@@ -37,7 +37,7 @@
                     <div class="avatar-wrapper-modern">
                         <div class="avatar-modern">
                             <% if (parent.profilePhoto) { %>
-                                <img src="<%= parent.profilePhoto %>" alt="<%= parent.name %>">
+                                <img src="<%= uploadUrl(parent.profilePhoto) %>" alt="<%= parent.name %>">
                                 <% } else { %>
                                     <i class="fas fa-user"></i>
                                     <% } %>
@@ -80,7 +80,7 @@
                                                 <%= __('viewDetails') %>
                                             </a>
                                             <form action="/specialist/parents/<%= parent._id %>/unlink" method="POST"
-                                                onsubmit="return confirm('<%= __('confirmUnlinkParent') %>')">
+                                                data-confirm="<%= __('confirmUnlinkParent') %>" onsubmit="return confirm(this.dataset.confirm)">
                                                 <button type="submit" class="btn-modern btn-unlink">
                                                     <i class="fas fa-unlink"></i>
                                                     <%= __('unlink') %>
@@ -101,7 +101,7 @@
                         <div class="empty-state-modern">
                             <i class="fas fa-users-slash"></i>
                             <h3>
-                                <%= __('noParentsFound') %>
+                                <%= __('noParents') %>
                             </h3>
                         </div>
                         <% } %>

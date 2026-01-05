@@ -8,7 +8,7 @@
             </h2>
             <button onclick="openAddChildModal()" class="btn-add-child-modern">
                 <i class="fas fa-plus-circle"></i>
-                <span>إضافة طفل</span>
+                <span><%= __('addChild') %></span>
             </button>
         </div>
 
@@ -41,10 +41,10 @@
                         <div class="detail-row-clean" style="flex-direction: column; gap: 0.2rem;">
                             <div style="display: flex; align-items: center; gap: 0.5rem; color: #64748b;">
                                 <i class="fas fa-user-tie icon-primary"></i>
-                                <span style="font-size: 0.9rem;">ولي الأمر:</span>
+                                <span style="font-size: 0.9rem;"><%= __('parent') %>:</span>
                             </div>
                             <div style="font-weight: 600; color: #334155;">
-                                <%= child.parent ? child.parent.name : 'غير محدد' %>
+                                <%= child.parent ? child.parent.name : __('notAssigned') %>
                             </div>
                             <% if (child.parent && child.parent.staffId) { %>
                                 <span class="badge-pill-custom"
@@ -59,8 +59,7 @@
                         <div class="badge-container-clean">
                             <span
                                 class="badge-pill-custom <%= child.difficultyLevel === 'beginner' ? 'badge-beginner' : child.difficultyLevel === 'intermediate' ? 'badge-intermediate' : 'badge-advanced' %>">
-                                <%= child.difficultyLevel==='beginner' ? 'مبتدئ' :
-                                    child.difficultyLevel==='intermediate' ? 'متوسط' : 'متقدم' %>
+                                <%= __(child.difficultyLevel) %>
                             </span>
                         </div>
                     </a>
@@ -92,10 +91,10 @@
                 <div class="form-group-clean">
                     <label>
                         <i class="fas fa-user-friends" style="margin-left: 0.5rem; color: #3b82f6;"></i>
-                        اختر ولي الأمر
+                        <%= __('selectParent') %>
                     </label>
                     <select id="parentSelect" name="parentId" class="input-modern" required>
-                        <option value="">جاري التحميل...</option>
+                        <option value=""><%= __('loadingParents') %></option>
                     </select>
                 </div>
 
@@ -182,12 +181,12 @@
 
                 if (!data.success) {
                     console.error('❌ API returned success=false:', data.message);
-                    select.innerHTML = '<option value="">خطأ في تحميل الآباء</option>';
+                    select.innerHTML = '<option value=""><%= __('loadParentsError') %></option>';
                     return;
                 }
 
                 if (data.parents && data.parents.length > 0) {
-                    select.innerHTML = '<option value="">اختر ولي الأمر</option>';
+                    select.innerHTML = '<option value=""><%= __('selectParent') %></option>';
                     data.parents.forEach(parent => {
                         const option = document.createElement('option');
                         option.value = parent._id;
@@ -197,12 +196,12 @@
                     console.log(`✅ Loaded ${data.parents.length} parents`);
                 } else {
                     console.warn('⚠️ No linked parents found');
-                    select.innerHTML = '<option value="">لا يوجد آباء مرتبطون</option>';
+                    select.innerHTML = '<option value=""><%= __('noLinkedParents') %></option>';
                 }
             } catch (error) {
                 console.error('❌ Error fetching parents:', error);
                 const select = document.getElementById('parentSelect');
-                select.innerHTML = '<option value="">خطأ في الاتصال بالخادم</option>';
+                select.innerHTML = '<option value=""><%= __('serverConnectionError') %></option>';
             }
         }
 

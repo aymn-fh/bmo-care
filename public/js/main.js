@@ -1,6 +1,8 @@
 // Main JavaScript for Specialist Portal
 
 document.addEventListener('DOMContentLoaded', function () {
+    const lang = (document.documentElement.getAttribute('lang') || 'ar').toLowerCase();
+    const isArabic = lang === 'ar';
     // Menu Toggle for Mobile
     const menuToggle = document.getElementById('menuToggle');
     const sidebar = document.querySelector('.sidebar');
@@ -52,7 +54,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const submitBtn = form.querySelector('button[type="submit"]');
             if (submitBtn) {
                 submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري المعالجة...';
+                submitBtn.innerHTML = isArabic
+                    ? '<i class="fas fa-spinner fa-spin"></i> جاري المعالجة...'
+                    : '<i class="fas fa-spinner fa-spin"></i> Processing...';
             }
         });
     });
@@ -127,7 +131,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <i class="${iconClass}"></i>
             </div>
             <div class="toast-body">
-                <h4>تحديث فوري ✨</h4>
+                <h4>${isArabic ? 'تحديث فوري' : 'Live update'}</h4>
                 <p>${message}</p>
             </div>
         `;

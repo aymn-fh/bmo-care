@@ -166,6 +166,20 @@ app.use(serverCheck);
 // Routes
 app.use('/', require('./routes/index'));
 
+// Language switcher (used by header links)
+app.get('/lang/:lang', (req, res) => {
+    const lang = String(req.params.lang || '').toLowerCase();
+    if (!['ar', 'en'].includes(lang)) {
+        const fallback = req.get('Referer') || '/';
+        return res.redirect(fallback);
+    }
+
+    // 1 year
+    res.cookie('lang', lang, { maxAge: 365 * 24 * 60 * 60 * 1000, httpOnly: false });
+    const back = req.get('Referer') || '/';
+    return res.redirect(back);
+});
+
 app.use('/auth', require('./routes/auth'));
 app.use('/chat', require('./routes/chat'));
 app.use('/admin', require('./routes/admin'));

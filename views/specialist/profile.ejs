@@ -53,7 +53,7 @@
                     <div class="stat-quick-value">
                         <%= stats.sessions %>
                     </div>
-                    <div class="stat-quick-label">الجلسات</div>
+                    <div class="stat-quick-label"><%= __('sessions') %></div>
                 </div>
             </div>
         </div>
@@ -69,15 +69,15 @@
     <div class="profile-tabs">
         <button class="profile-tab active" data-tab="info">
             <i class="fa-solid fa-user"></i>
-            المعلومات الشخصية
+            <%= __('personalInfo') %>
         </button>
         <button class="profile-tab" data-tab="bio">
             <i class="fa-solid fa-file-lines"></i>
-            النبذة التعريفية
+            <%= __('bio') %>
         </button>
         <button class="profile-tab" data-tab="security">
             <i class="fa-solid fa-lock"></i>
-            الأمان
+            <%= __('security') %>
         </button>
     </div>
 
@@ -90,7 +90,7 @@
                 <div class="profile-card-header">
                     <h3>
                         <i class="fa-solid fa-user"></i>
-                        المعلومات الأساسية
+                        <%= __('basicInfo') %>
                     </h3>
                 </div>
 
@@ -99,7 +99,7 @@
                         <div class="form-group">
                             <label for="name">
                                 <i class="fa-solid fa-user"></i>
-                                الاسم الكامل
+                                <%= __('name') %>
                             </label>
                             <input type="text" id="name" name="name" value="<%= user.name %>" required>
                         </div>
@@ -107,7 +107,7 @@
                         <div class="form-group">
                             <label for="email">
                                 <i class="fa-solid fa-envelope"></i>
-                                البريد الإلكتروني
+                                <%= __('email') %>
                             </label>
                             <input type="email" id="email" name="email" value="<%= user.email %>" required>
                         </div>
@@ -117,7 +117,7 @@
                         <div class="form-group">
                             <label for="phone">
                                 <i class="fa-solid fa-phone"></i>
-                                رقم الهاتف
+                                <%= __('phone') %>
                             </label>
                             <input type="tel" id="phone" name="phone" value="<%= user.phone || '' %>">
                         </div>
@@ -125,7 +125,7 @@
                         <div class="form-group">
                             <label for="specialization">
                                 <i class="fa-solid fa-graduation-cap"></i>
-                                التخصص
+                                <%= __('specialization') %>
                             </label>
                             <input type="text" id="specialization" name="specialization"
                                 value="<%= user.specialization || '' %>">
@@ -136,7 +136,7 @@
                         <div class="form-group">
                             <label>
                                 <i class="fa-solid fa-building"></i>
-                                المركز
+                                <%= __('centerName') %>
                             </label>
                             <input type="text" value="<%= isRTL ? user.center.name_ar : user.center.name_en %>" disabled
                                 class="disabled-input">
@@ -146,7 +146,7 @@
                             <div class="form-actions">
                                 <button type="submit" class="btn btn-primary btn-lg">
                                     <i class="fa-solid fa-check-circle"></i>
-                                    تأكيد التعديلات
+                                    <%= __('saveChanges') %>
                                 </button>
                             </div>
                 </form>
@@ -159,9 +159,9 @@
                 <div class="profile-card-header">
                     <h3>
                         <i class="fa-solid fa-file-lines"></i>
-                        النبذة التعريفية
+                        <%= __('bio') %>
                     </h3>
-                    <p class="profile-card-description">أضف نبذة تعريفية عن نفسك وخبراتك</p>
+                    <p class="profile-card-description"><%= __('bioDesc') %></p>
                 </div>
 
                 <form action="/specialist/profile/update" method="POST" class="profile-form">
@@ -173,10 +173,10 @@
 
                     <div class="form-group">
                         <label for="bio">
-                            نبذة تعريفية (حتى 500 حرف)
+                            <%= __('bioLabel') %>
                         </label>
                         <textarea id="bio" name="bio" rows="8" maxlength="500"
-                            placeholder="اكتب نبذة عنك..."><%= user.bio || '' %></textarea>
+                            placeholder="<%= __('bioPlaceholder') %>"><%= user.bio || '' %></textarea>
                         <div class="character-count">
                             <span id="charCount">
                                 <%= (user.bio || '' ).length %>
@@ -187,7 +187,7 @@
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary btn-lg">
                             <i class="fa-solid fa-check-circle"></i>
-                            تأكيد التعديلات
+                            <%= __('saveChanges') %>
                         </button>
                     </div>
                 </form>
@@ -200,16 +200,16 @@
                 <div class="profile-card-header">
                     <h3>
                         <i class="fa-solid fa-lock"></i>
-                        تغيير كلمة المرور
+                        <%= __('changePassword') %>
                     </h3>
-                    <p class="profile-card-description">احرص على استخدام كلمة مرور قوية</p>
+                    <p class="profile-card-description"><%= __('passwordStrongHint') %></p>
                 </div>
 
                 <form action="/specialist/profile/change-password" method="POST" class="profile-form">
                     <div class="form-group">
                         <label for="currentPassword">
                             <i class="fa-solid fa-key"></i>
-                            كلمة المرور الحالية
+                            <%= __('currentPassword') %>
                         </label>
                         <input type="password" id="currentPassword" name="currentPassword" required>
                     </div>
@@ -217,16 +217,16 @@
                     <div class="form-group">
                         <label for="newPassword">
                             <i class="fa-solid fa-lock"></i>
-                            كلمة المرور الجديدة
+                            <%= __('newPassword') %>
                         </label>
                         <input type="password" id="newPassword" name="newPassword" required minlength="6">
-                        <small class="form-help">يجب أن تكون 6 أحرف على الأقل</small>
+                        <small class="form-help"><%= __('passwordMinLengthHint') %></small>
                     </div>
 
                     <div class="form-group">
                         <label for="confirmPassword">
                             <i class="fa-solid fa-lock-keyhole"></i>
-                            تأكيد كلمة المرور الجديدة
+                            <%= __('confirmPassword') %>
                         </label>
                         <input type="password" id="confirmPassword" name="confirmPassword" required minlength="6">
                     </div>
@@ -234,7 +234,7 @@
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary btn-lg">
                             <i class="fa-solid fa-check-circle"></i>
-                            تأكيد التعديلات
+                            <%= __('saveChanges') %>
                         </button>
                     </div>
                 </form>

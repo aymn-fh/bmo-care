@@ -12,7 +12,7 @@
             </form>
 
             <a href="/specialist/parents" class="btn-back-clean">
-                <i class="fas fa-arrow-left"></i>
+                <i class="fas fa-arrow-<%= isRTL ? 'right' : 'left' %>"></i>
                 <%= __('returnToParents') %>
             </a>
         </div>
@@ -22,7 +22,7 @@
             <!-- Right Side: Avatar -->
             <div class="hero-avatar">
                 <% if (parent.profilePhoto) { %>
-                    <img src="/<%= parent.profilePhoto.replace(/\\/g, '/') %>" alt="<%= parent.name %>">
+                    <img src="<%= uploadUrl(parent.profilePhoto) %>" alt="<%= parent.name %>">
                     <% } else { %>
                         <i class="fas fa-user"></i>
                         <% } %>
@@ -43,20 +43,20 @@
 
             <!-- Left Side: 3 Action Squares -->
             <div class="hero-actions">
-                <a href="/specialist/chat/init/<%= parent._id %>" class="action-square" title="محادثة مباشرة">
+                <a href="/specialist/chat/init/<%= parent._id %>" class="action-square" title="<%= __('startChat') %>">
                     <i class="fas fa-comments"></i>
                 </a>
 
-                <a href="mailto:<%= parent.email %>" class="action-square" title="إرسال بريد">
+                <a href="mailto:<%= parent.email %>" class="action-square" title="<%= __('sendEmail') %>">
                     <i class="fas fa-envelope"></i>
                 </a>
 
                 <% if (parent.phone) { %>
-                    <a href="tel:<%= parent.phone %>" class="action-square" title="اتصال">
+                    <a href="tel:<%= parent.phone %>" class="action-square" title="<%= __('call') %>">
                         <i class="fas fa-phone"></i>
                     </a>
                     <% } else { %>
-                        <div class="action-square disabled" title="لا يوجد هاتف">
+                        <div class="action-square disabled" title="<%= __('noPhone') %>">
                             <i class="fas fa-phone-slash"></i>
                         </div>
                         <% } %>
@@ -99,8 +99,7 @@
                             <div class="badge-container-clean">
                                 <span
                                     class="badge-pill-custom <%= child.difficultyLevel === 'beginner' ? 'badge-beginner' : child.difficultyLevel === 'intermediate' ? 'badge-intermediate' : 'badge-advanced' %>">
-                                    <%= child.difficultyLevel==='beginner' ? 'مبتدئ' :
-                                        child.difficultyLevel==='intermediate' ? 'متوسط' : 'متقدم' %>
+                                    <%= __(child.difficultyLevel) %>
                                 </span>
                             </div>
 
@@ -181,7 +180,7 @@
             color: white;
             margin-bottom: 4rem;
             min-height: 220px;
-            direction: rtl;
+            direction: inherit;
             box-shadow: var(--shadow-lg);
         }
 
@@ -192,7 +191,7 @@
         }
 
         .hero-content {
-            text-align: right;
+            text-align: start;
             display: flex;
             flex-direction: column;
             align-items: flex-start;
