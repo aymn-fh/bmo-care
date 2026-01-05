@@ -19,6 +19,28 @@
 
         <!-- Hero Card (Profile Header) -->
         <div class="hero-card">
+            <!-- Right Side: Avatar -->
+            <div class="hero-avatar">
+                <% if (parent.profilePhoto) { %>
+                    <img src="/<%= parent.profilePhoto.replace(/\\/g, '/') %>" alt="<%= parent.name %>">
+                    <% } else { %>
+                        <i class="fas fa-user"></i>
+                        <% } %>
+            </div>
+
+            <!-- Middle: Text -->
+            <div class="hero-content">
+                <div class="hero-kicker">
+                    <%= __('parentInfo') %> :
+                </div>
+                <h1 class="hero-title">
+                    <%= parent.name %>
+                </h1>
+                <div class="hero-subtitle">
+                    <%= parent.email %>
+                </div>
+            </div>
+
             <!-- Left Side: 3 Action Squares -->
             <div class="hero-actions">
                 <a href="/specialist/chat/init/<%= parent._id %>" class="action-square" title="محادثة مباشرة">
@@ -37,28 +59,6 @@
                         <div class="action-square disabled" title="لا يوجد هاتف">
                             <i class="fas fa-phone-slash"></i>
                         </div>
-                        <% } %>
-            </div>
-
-            <!-- Middle: Text -->
-            <div class="hero-content">
-                <div class="hero-kicker">
-                    <%= __('parentInfo') %> :
-                </div>
-                <h1 class="hero-title">
-                    <%= parent.name %>
-                </h1>
-                <div class="hero-subtitle">
-                    <%= parent.email %>
-                </div>
-            </div>
-
-            <!-- Right Side: Avatar -->
-            <div class="hero-avatar">
-                <% if (parent.profilePhoto) { %>
-                    <img src="/<%= parent.profilePhoto.replace(/\\/g, '/') %>" alt="<%= parent.name %>">
-                    <% } else { %>
-                        <i class="fas fa-user"></i>
                         <% } %>
             </div>
         </div>
@@ -192,10 +192,10 @@
         }
 
         .hero-content {
-            text-align: center;
+            text-align: right;
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: flex-start;
             gap: 0.35rem;
             padding: 0 1rem;
             flex: 1;
