@@ -89,8 +89,7 @@
                     <% specialists.forEach(function(specialist) { %>
                         <tr style="background: var(--bg-body); transition: transform 0.2s;">
                             <td style="padding: 1rem; border-radius: 8px 0 0 8px; text-align: center;">
-                                <input type="checkbox" class="select-item" value="<%= specialist._id %>"
-                                    onchange="updateBulkActions()" style="cursor: pointer;">
+                                <input type="checkbox" class="item-checkbox" value="<%= specialist._id %>" style="cursor: pointer;">
                             </td>
                             <td style="padding: 1rem;">
                                 <span class="badge badge-info" style="background: #e0f2fe; color: #0284c7; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem;">

@@ -30,7 +30,13 @@ router.get('/', async (req, res) => {
             // Get Stats
             const statsRes = await apiClient.authGet(req, '/admin/stats');
             if (statsRes.data.success) {
-                stats = statsRes.data.stats;
+                const rawStats = statsRes.data.stats || {};
+                // Normalize backend stats shape -> view-friendly keys
+                stats = {
+                    specialists: rawStats.centerSpecialists ?? rawStats.specialists ?? 0,
+                    parents: rawStats.myParents ?? rawStats.parents ?? 0,
+                    children: rawStats.centerChildren ?? rawStats.children ?? rawStats.myChildren ?? 0
+                };
                 recentSpecialists = statsRes.data.recentSpecialists || [];
             }
         }
@@ -72,10 +78,15 @@ router.get('/specialists', async (req, res) => {
 
         const specialists = response.data.success ? response.data.specialists : [];
 
-        res.render('admin/specialists/index', {
+        res.render('admin/specialists', {
             title: 'إدارة الأخصائيين',
             specialists,
-            query: req.query
+            searchQuery: req.query.search || '',
+            filters: {
+                status: req.query.status || '',
+                sort: req.query.sort || '-createdAt',
+                period: req.query.period || ''
+            }
         });
     } catch (error) {
         console.error('List Specialists Error:', error.message);
@@ -110,7 +121,7 @@ router.post('/specialists', async (req, res) => {
 
         // Just forward the body to the backend API
         // Backend handles validation, email checking, hashing, creation
-        const response = await apiClient.authPost(req, '/admin/specialists', req.body);
+        const response = await apiClient.authPost(req, '/admin/create-specialist', req.body);
 
         if (response.data.success) {
             req.flash('success_msg', 'تم إنشاء حساب الأخصائي بنجاح');
@@ -175,9 +186,23 @@ router.post('/specialists/bulk-delete', async (req, res) => {
     try {
         const { ids } = req.body;
 
-        const response = await apiClient.authPost(req, '/admin/specialists/bulk-delete', { ids });
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return res.json({ success: false, message: 'لا توجد عناصر محددة للحذف' });
+        }
 
-        res.json(response.data);
+        const results = await Promise.allSettled(
+            ids.map((id) => apiClient.authDelete(req, `/admin/specialists/${id}`))
+        );
+
+        const failed = results.filter(r => r.status === 'rejected');
+        if (failed.length > 0) {
+            return res.json({
+                success: false,
+                message: `فشل حذف ${failed.length} عنصر(عناصر)`
+            });
+        }
+
+        return res.json({ success: true });
     } catch (error) {
         console.error('Bulk Delete Error:', error.message);
         res.json({ success: false, message: error.message });
