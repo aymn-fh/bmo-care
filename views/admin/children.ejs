@@ -1,46 +1,67 @@
 <%- include('../partials/layout-start', { title: __('myChildren'), activePage: 'children' }) %>
 
-    <div class="page-header">
-        <h2><i class="fas fa-child"></i>
+<div class="page-container-clean">
+    <div class="section-header-clean" style="margin-bottom: 2rem;">
+        <h2 style="font-size: 1.5rem; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fas fa-child" style="color: #f59e0b;"></i>
             <%= __('myChildren') %>
         </h2>
     </div>
 
-    <div class="cards-grid">
-        <% if (children && children.length> 0) { %>
+    <div class="cards-grid-modern" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+        <% if (children && children.length > 0) { %>
             <% children.forEach(function(child) { %>
-                <div class="child-card">
-                    <div class="child-avatar <%= child.gender === 'male' ? 'male' : 'female' %>">
+                <div class="child-card-centered glass" style="padding: 1.5rem; border-radius: 20px; text-align: center; transition: transform 0.2s; background: var(--bg-card); display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                    <!-- Avatar -->
+                    <div class="avatar-large-blue" style="width: 80px; height: 80px; border-radius: 50%; background: #eff6ff; display: flex; align-items: center; justify-content: center; color: #3b82f6; font-size: 2rem; margin-bottom: 1rem;">
                         <i class="fas fa-child"></i>
                     </div>
-                    <div class="child-info">
-                        <h3>
-                            <%= child.name %>
-                        </h3>
-                        <p><i class="fas fa-birthday-cake"></i>
-                            <%= child.age %> سنوات
-                        </p>
-                        <p><i class="fas fa-user"></i>
-                            <%= child.parent ? child.parent.name : '-' %>
-                        </p>
-                    </div>
-                    <div class="child-stats">
-                        <span
-                            class="badge badge-<%= child.difficultyLevel === 'beginner' ? 'success' : child.difficultyLevel === 'intermediate' ? 'warning' : 'danger' %>">
-                            <%= child.difficultyLevel==='beginner' ? 'مبتدئ' : child.difficultyLevel==='intermediate'
-                                ? 'متوسط' : 'متقدم' %>
-                        </span>
+
+                    <!-- Name -->
+                     <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1rem;">
+                        <%= child.name %>
+                    </h3>
+
+                    <!-- Details -->
+                    <div style="width: 100%; display: flex; flex-direction: column; gap: 0.8rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem;">
+                            <span style="color: var(--text-secondary);"><%= __('age') %></span>
+                            <span style="font-weight: 600; color: var(--text-primary);">
+                                <%= child.age %> <%= __('years') %>
+                            </span>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem;">
+                            <span style="color: var(--text-secondary);"><%= __('parent') %></span>
+                            <span style="font-weight: 600; color: var(--text-primary);">
+                                <%= child.parent ? child.parent.name : '-' %>
+                            </span>
+                        </div>
+
+                         <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem;">
+                            <span style="color: var(--text-secondary);"><%= __('level') %></span>
+                            <span class="badge" style="
+                                padding: 4px 10px; 
+                                border-radius: 6px; 
+                                font-size: 0.8rem;
+                                background: <%= child.difficultyLevel === 'beginner' ? '#ecfdf5' : child.difficultyLevel === 'intermediate' ? '#fffbeb' : '#fef2f2' %>;
+                                color: <%= child.difficultyLevel === 'beginner' ? '#059669' : child.difficultyLevel === 'intermediate' ? '#d97706' : '#dc2626' %>;
+                            ">
+                                <%= child.difficultyLevel==='beginner' ? 'مبتدئ' : child.difficultyLevel==='intermediate' ? 'متوسط' : 'متقدم' %>
+                            </span>
+                        </div>
                     </div>
                 </div>
-                <% }); %>
-                    <% } else { %>
-                        <div class="empty-state">
-                            <i class="fas fa-child"></i>
-                            <p>
-                                <%= __('noData') %>
-                            </p>
-                        </div>
-                        <% } %>
+            <% }); %>
+        <% } else { %>
+            <div class="empty-state" style="grid-column: 1 / -1; text-align: center; padding: 4rem; color: var(--text-secondary);">
+                <div style="width: 80px; height: 80px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 2rem;">
+                     <i class="fas fa-child" style="color: #94a3b8;"></i>
+                </div>
+                <h3><%= __('noData') %></h3>
+            </div>
+        <% } %>
     </div>
+</div>
 
-    <%- include('../partials/layout-end') %>
+<%- include('../partials/layout-end') %>

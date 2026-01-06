@@ -1,78 +1,81 @@
 <%- include('../partials/layout-start', { title: __('createSpecialist'), activePage: 'specialists' }) %>
 
-    <div class="page-header">
-        <a href="/admin/specialists" class="btn btn-link">
+<div class="page-container-clean">
+    <div class="section-header-clean" style="margin-bottom: 2rem;">
+        <a href="/admin/specialists" class="btn btn-link" style="color: var(--text-secondary); display: flex; align-items: center; gap: 0.5rem; text-decoration: none;">
             <i class="fas fa-arrow-<%= isRTL ? 'right' : 'left' %>"></i>
             <%= __('back') %>
         </a>
     </div>
 
-    <div class="form-card">
-        <div class="card-header">
-            <h2>
+    <div class="glass" style="max-width: 800px; margin: 0 auto; border-radius: 20px; padding: 2rem; background: var(--bg-card); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+        <div style="margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+            <h2 style="margin: 0; color: var(--text-primary); font-size: 1.5rem;">
+                <i class="fas fa-user-plus" style="color: #3b82f6; margin-left: 0.5rem;"></i>
                 <%= __('createSpecialist') %>
             </h2>
         </div>
 
-        <form action="/admin/specialists" method="POST" class="form">
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="name">
-                        <%= __('name') %> <span class="required">*</span>
+        <form action="/admin/specialists" method="POST" class="clean-form" style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <div class="form-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                <div class="form-group clean-field">
+                    <label for="name" style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-weight: 500;">
+                        <%= __('name') %> <span class="required" style="color: #ef4444;">*</span>
                     </label>
-                    <input type="text" id="name" name="name" required>
+                    <input type="text" id="name" name="name" required style="width: 100%; padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-primary);">
                 </div>
 
-                <div class="form-group">
-                    <label for="email">
-                        <%= __('email') %> <span class="required">*</span>
+                <div class="form-group clean-field">
+                    <label for="email" style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-weight: 500;">
+                        <%= __('email') %> <span class="required" style="color: #ef4444;">*</span>
                     </label>
-                    <input type="email" id="email" name="email" required>
+                    <input type="email" id="email" name="email" required style="width: 100%; padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-primary);">
                 </div>
             </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="password">
-                        <%= __('password') %> <span class="required">*</span>
+            <div class="form-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                <div class="form-group clean-field">
+                    <label for="password" style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-weight: 500;">
+                        <%= __('password') %> <span class="required" style="color: #ef4444;">*</span>
                     </label>
-                    <input type="password" id="password" name="password" required minlength="6">
+                    <input type="password" id="password" name="password" required minlength="6" style="width: 100%; padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-primary);">
                 </div>
 
-                <div class="form-group">
-                    <label for="phone">
+                <div class="form-group clean-field">
+                    <label for="phone" style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-weight: 500;">
                         <%= __('phone') %>
                     </label>
-                    <input type="tel" id="phone" name="phone">
+                    <input type="tel" id="phone" name="phone" style="width: 100%; padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-primary);">
                 </div>
             </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="specialization">
+            <div class="form-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                <div class="form-group clean-field">
+                    <label for="specialization" style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-weight: 500;">
                         <%= __('specialization') %>
                     </label>
-                    <input type="text" id="specialization" name="specialization" placeholder="مثال: علاج النطق">
+                    <input type="text" id="specialization" name="specialization" placeholder="مثال: علاج النطق" style="width: 100%; padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-primary);">
                 </div>
 
-                <div class="form-group">
-                    <label for="licenseNumber">
+                <div class="form-group clean-field">
+                    <label for="licenseNumber" style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-weight: 500;">
                         <%= __('licenseNumber') %>
                     </label>
-                    <input type="text" id="licenseNumber" name="licenseNumber">
+                    <input type="text" id="licenseNumber" name="licenseNumber" style="width: 100%; padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-primary);">
                 </div>
             </div>
 
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save"></i>
+            <div class="form-actions" style="margin-top: 1rem; display: flex; justify-content: flex-end; gap: 1rem;">
+                <button type="submit" class="btn btn-primary" style="padding: 0.8rem 2rem; border-radius: 10px;">
+                    <i class="fas fa-save" style="margin-left: 0.5rem;"></i>
                     <%= __('save') %>
                 </button>
-                <a href="/admin/specialists" class="btn btn-outline">
+                <a href="/admin/specialists" class="btn btn-outline" style="padding: 0.8rem 2rem; border-radius: 10px;">
                     <%= __('cancel') %>
                 </a>
             </div>
         </form>
     </div>
+</div>
 
-    <%- include('../partials/layout-end') %>
+<%- include('../partials/layout-end') %>

@@ -1,45 +1,59 @@
 <%- include('../partials/layout-start', { title: __('myParents'), activePage: 'parents' }) %>
 
-    <div class="page-header">
-        <h2><i class="fas fa-users"></i>
+<div class="page-container-clean">
+    <div class="section-header-clean" style="margin-bottom: 2rem;">
+        <h2 style="font-size: 1.5rem; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fas fa-users" style="color: #10b981;"></i>
             <%= __('myParents') %>
         </h2>
     </div>
 
-    <div class="cards-grid">
-        <% if (parents && parents.length> 0) { %>
+    <div class="cards-grid-modern" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+        <% if (parents && parents.length > 0) { %>
             <% parents.forEach(function(parent) { %>
-                <div class="person-card">
-                    <div class="person-avatar">
-                        <% if (parent.profilePhoto) { %>
-                            <img src="<%= uploadUrl(parent.profilePhoto) %>" alt="<%= parent.name %>" />
+                <div class="profile-card-modern glass" style="padding: 1.5rem; border-radius: 20px; text-align: center; transition: transform 0.2s; background: var(--bg-card); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                    <div class="profile-avatar-large" style="width: 100px; height: 100px; margin: 0 auto 1rem; border-radius: 50%; overflow: hidden; background: #f1f5f9; position: relative; border: 4px solid var(--bg-body);">
+                         <% if (parent.profilePhoto) { %>
+                            <img src="<%= uploadUrl(parent.profilePhoto) %>" alt="<%= parent.name %>" style="width: 100%; height: 100%; object-fit: cover;">
                         <% } else { %>
-                            <i class="fas fa-user"></i>
+                            <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 2.5rem;">
+                                <i class="fas fa-user"></i>
+                            </div>
                         <% } %>
                     </div>
-                    <div class="person-info">
-                        <h3>
-                            <%= parent.name %>
-                        </h3>
-                        <p><i class="fas fa-envelope"></i>
+                    
+                    <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem;">
+                        <%= parent.name %>
+                    </h3>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem; align-items: center; color: var(--text-secondary); font-size: 0.9rem;">
+                        <span style="display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-envelope" style="color: #64748b;"></i>
                             <%= parent.email %>
-                        </p>
+                        </span>
+                        
                         <% if (parent.phone) { %>
-                            <p><i class="fas fa-phone"></i>
+                             <span style="display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fas fa-phone" style="color: #64748b;"></i>
                                 <%= parent.phone %>
-                            </p>
+                            </span>
                         <% } %>
+                    </div>
+
+                     <div class="card-actions" style="margin-top: 1.5rem;">
+                        <!-- Placeholder for actions if needed in future -->
                     </div>
                 </div>
-                <% }); %>
-                    <% } else { %>
-                        <div class="empty-state">
-                            <i class="fas fa-users"></i>
-                            <p>
-                                <%= __('noData') %>
-                            </p>
-                        </div>
-                        <% } %>
+            <% }); %>
+        <% } else { %>
+            <div class="empty-state" style="grid-column: 1 / -1; text-align: center; padding: 4rem; color: var(--text-secondary);">
+                <div style="width: 80px; height: 80px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 2rem;">
+                    <i class="fas fa-users" style="color: #94a3b8;"></i>
+                </div>
+                <h3><%= __('noData') %></h3>
+            </div>
+        <% } %>
     </div>
+</div>
 
-    <%- include('../partials/layout-end') %>
+<%- include('../partials/layout-end') %>
