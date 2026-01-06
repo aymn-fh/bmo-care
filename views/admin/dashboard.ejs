@@ -1,167 +1,377 @@
 <%- include('../partials/layout-start', { title: __('dashboard'), activePage: 'dashboard' }) %>
 
-    <div class="page-container-clean">
-        <!-- Center Info -->
+    <div class="page-container-clean admin-dashboard">
+        <!-- Center Info (Admin-only header so dashboard stays distinct) -->
         <% if (center) { %>
-            <div class="header-section-clean" style="margin-bottom: 2rem;">
-                <div class="center-info-modern glass" style="padding: 1.5rem; display: flex; align-items: center; gap: 1.5rem; border-radius: 20px;">
-                    <div class="center-icon-large" style="width: 60px; height: 60px; background: #eff6ff; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #3b82f6; font-size: 1.8rem;">
+            <div class="section-clean">
+                <div class="admin-center-card glass">
+                    <div class="admin-center-icon icon-blue">
                         <i class="fas fa-building"></i>
                     </div>
-                    <div class="center-text">
-                        <h2 style="margin: 0; color: var(--text-primary); font-size: 1.5rem;">
-                            <%= center.name %>
-                        </h2>
+                    <div class="admin-center-text">
+                        <h2><%= center.name %></h2>
                         <% if (center.address) { %>
-                            <p style="margin: 0.25rem 0 0; color: var(--text-secondary);">
-                                <i class="fas fa-map-marker-alt" style="margin-right: 0.5rem;"></i>
+                            <p>
+                                <i class="fas fa-map-marker-alt"></i>
                                 <%= center.address %>
                             </p>
                         <% } %>
                     </div>
                 </div>
             </div>
-            <% } else { %>
-                <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <%= __('noCenterAssigned') %>
+        <% } else { %>
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <%= __('noCenterAssigned') %>
+            </div>
+        <% } %>
+
+        <!-- Stats Cards (same style language as specialist dashboard, but different data) -->
+        <div class="stats-grid-clean">
+            <div class="stat-card-clean">
+                <div class="stat-content-clean">
+                    <h2><%= stats.specialists || 0 %></h2>
+                    <p><%= __('specialists') %></p>
                 </div>
-            <% } %>
+                <div class="stat-icon-clean icon-blue">
+                    <i class="fas fa-user-md"></i>
+                </div>
+            </div>
 
-                    <!-- Stats Cards -->
-                    <div class="stats-grid-clean" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2.5rem;">
-                        <!-- Specialists -->
-                        <div class="stat-card-clean" style="padding: 1.5rem; border-radius: 16px; display: flex; align-items: center; justify-content: space-between;">
-                            <div class="stat-content-clean">
-                                <h3 style="font-size: 2.5rem; font-weight: 700; color: #3b82f6; margin-bottom: 0;">
-                                    <%= stats.specialists || 0 %>
-                                </h3>
-                                <p style="color: #64748b; font-size: 0.95rem; font-weight: 500;">
-                                    <%= __('specialists') %>
-                                </p>
-                            </div>
-                             <div class="stat-icon-clean" style="width: 50px; height: 50px; background: #eff6ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #3b82f6;">
-                                <i class="fas fa-user-md" style="font-size: 1.4rem;"></i>
-                            </div>
-                        </div>
+            <div class="stat-card-clean">
+                <div class="stat-content-clean">
+                    <h2><%= stats.parents || 0 %></h2>
+                    <p><%= __('parents') %></p>
+                </div>
+                <div class="stat-icon-clean icon-green">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
 
-                        <!-- Parents -->
-                        <div class="stat-card-clean" style="padding: 1.5rem; border-radius: 16px; display: flex; align-items: center; justify-content: space-between;">
-                            <div class="stat-content-clean">
-                                <h3 style="font-size: 2.5rem; font-weight: 700; color: #10b981; margin-bottom: 0;">
-                                    <%= stats.parents || 0 %>
-                                </h3>
-                                <p style="color: #64748b; font-size: 0.95rem; font-weight: 500;">
-                                    <%= __('parents') %>
-                                </p>
-                            </div>
-                             <div class="stat-icon-clean" style="width: 50px; height: 50px; background: #ecfdf5; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #10b981;">
-                                <i class="fas fa-users" style="font-size: 1.4rem;"></i>
-                            </div>
-                        </div>
+            <div class="stat-card-clean">
+                <div class="stat-content-clean">
+                    <h2><%= stats.children || 0 %></h2>
+                    <p><%= __('children') %></p>
+                </div>
+                <div class="stat-icon-clean icon-orange">
+                    <i class="fas fa-child"></i>
+                </div>
+            </div>
+        </div>
 
-                        <!-- Children -->
-                        <div class="stat-card-clean" style="padding: 1.5rem; border-radius: 16px; display: flex; align-items: center; justify-content: space-between;">
-                            <div class="stat-content-clean">
-                                <h3 style="font-size: 2.5rem; font-weight: 700; color: #f59e0b; margin-bottom: 0;">
-                                    <%= stats.children || 0 %>
-                                </h3>
-                                <p style="color: #64748b; font-size: 0.95rem; font-weight: 500;">
-                                    <%= __('children') %>
-                                </p>
-                            </div>
-                             <div class="stat-icon-clean" style="width: 50px; height: 50px; background: #fffbeb; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #f59e0b;">
-                                <i class="fas fa-child" style="font-size: 1.4rem;"></i>
-                            </div>
-                        </div>
-                    </div>
+        <!-- Quick Actions -->
+        <div class="section-clean">
+            <div class="section-header-clean">
+                <h3>
+                    <%= __('quickActions') %>
+                    <i class="fas fa-bolt" style="color: var(--warning);"></i>
+                </h3>
+            </div>
+            <div class="actions-grid-clean admin-actions-grid">
+                <a href="/admin/specialists/create" class="action-card-clean">
+                    <i class="fas fa-user-plus"></i>
+                    <span><%= __('createSpecialist') %></span>
+                </a>
+                <a href="/admin/specialists" class="action-card-clean">
+                    <i class="fas fa-user-md"></i>
+                    <span><%= __('specialists') %></span>
+                </a>
+            </div>
+        </div>
 
-                    <!-- Quick Actions -->
-                    <div class="quick-actions" style="margin-bottom: 2.5rem;">
-                        <h2 style="font-size: 1.25rem; margin-bottom: 1rem; color: var(--text-primary);">
-                            <i class="fas fa-bolt" style="color: #f59e0b; margin-left: 0.5rem;"></i>
-                            <%= __('quickActions') %>
-                        </h2>
-                        <div class="actions-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                            <a href="/admin/specialists/create" class="action-card-clean glass" style="padding: 1.5rem; border-radius: 16px; display: flex; flex-direction: column; align-items: center; text-decoration: none; transition: transform 0.2s;">
-                                <div style="width: 48px; height: 48px; background: #eff6ff; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #3b82f6; margin-bottom: 1rem;">
-                                    <i class="fas fa-user-plus" style="font-size: 1.2rem;"></i>
-                                </div>
-                                <span style="font-weight: 600; color: var(--text-primary);">
-                                    <%= __('createSpecialist') %>
-                                </span>
-                            </a>
-                            <a href="/admin/specialists" class="action-card-clean glass" style="padding: 1.5rem; border-radius: 16px; display: flex; flex-direction: column; align-items: center; text-decoration: none; transition: transform 0.2s;">
-                                <div style="width: 48px; height: 48px; background: #f0f9ff; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #0ea5e9; margin-bottom: 1rem;">
-                                    <i class="fas fa-user-md" style="font-size: 1.2rem;"></i>
-                                </div>
-                                <span style="font-weight: 600; color: var(--text-primary);">
-                                    <%= __('specialists') %>
-                                </span>
-                            </a>
-                        </div>
-                    </div>
+        <!-- Recent Specialists -->
+        <div class="section-clean">
+            <div class="section-header-clean">
+                <h3>
+                    <%= __('adminRecentSpecialists') %>
+                    <i class="fas fa-user-md" style="color: var(--primary);"></i>
+                </h3>
+                <a href="/admin/specialists" class="view-all-link"><%= __('viewAll') %></a>
+            </div>
 
-                    <!-- Recent Specialists -->
-                    <div class="data-section-clean table-container-clean glass" style="padding: 1.5rem; border-radius: 16px;">
-                        <div class="section-header-clean" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                            <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--text-primary);">
-                                <i class="fas fa-user-md" style="color: #3b82f6; margin-left: 0.5rem;"></i>
-                                <%= __('adminRecentSpecialists') %>
-                            </h3>
-                            <a href="/admin/specialists" class="btn btn-link" style="color: #3b82f6; text-decoration: none; font-weight: 500;">
-                                <%= __('viewAll') %>
-                            </a>
-                        </div>
-
-                        <div class="table-responsive">
-                            <table class="clean-table" style="width: 100%; border-collapse: separate; border-spacing: 0 0.5rem;">
-                                <thead>
-                                    <tr>
-                                        <th style="text-align: right; padding: 1rem; color: var(--text-secondary); font-weight: 600;"><%= __('name') %></th>
-                                        <th style="text-align: right; padding: 1rem; color: var(--text-secondary); font-weight: 600;"><%= __('specialization') %></th>
-                                        <th style="text-align: right; padding: 1rem; color: var(--text-secondary); font-weight: 600;"><%= __('email') %></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <% if (recentSpecialists && recentSpecialists.length> 0) { %>
-                                        <% recentSpecialists.forEach(function(specialist) { %>
-                                            <tr style="background: var(--bg-body); border-radius: 8px;">
-                                                <td style="padding: 1rem; border-radius: 0 8px 8px 0;">
-                                                    <div class="cell-with-icon" style="display: flex; align-items: center; gap: 1rem;">
-                                                        <div class="avatar-circle-small" style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background: #f1f5f9;">
-                                                            <% if (specialist.profilePhoto) { %>
-                                                                <img src="<%= uploadUrl(specialist.profilePhoto) %>" alt="<%= specialist.name %>" style="width: 100%; height: 100%; object-fit: cover;">
-                                                            <% } else { %>
-                                                                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #94a3b8;">
-                                                                    <i class="fas fa-user-md"></i>
-                                                                </div>
-                                                            <% } %>
-                                                        </div>
-                                                        <span style="font-weight: 600; color: var(--text-primary);">
-                                                            <%= specialist.name %>
-                                                        </span>
-                                                    </div>
-                                                </td>
-                                                <td style="padding: 1rem; color: var(--text-secondary);">
-                                                    <%= specialist.specialization || '-' %>
-                                                </td>
-                                                <td style="padding: 1rem; border-radius: 8px 0 0 8px; color: var(--text-secondary);">
-                                                    <%= specialist.email %>
-                                                </td>
-                                            </tr>
-                                            <% }); %>
+            <div class="table-container-clean">
+                <table class="clean-table">
+                    <thead>
+                        <tr>
+                            <th class="text-right"><%= __('name') %></th>
+                            <th class="text-right"><%= __('specialization') %></th>
+                            <th class="text-right"><%= __('email') %></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (recentSpecialists && recentSpecialists.length> 0) { %>
+                            <% recentSpecialists.forEach(function(specialist) { %>
+                                <tr>
+                                    <td>
+                                        <div class="specialist-cell">
+                                            <div class="avatar-circle-small">
+                                                <% if (specialist.profilePhoto) { %>
+                                                    <img src="<%= uploadUrl(specialist.profilePhoto) %>" alt="<%= specialist.name %>">
                                                 <% } else { %>
-                                                    <tr>
-                                                        <td colspan="3" class="text-center text-muted" style="padding: 2rem; text-align: center;">
-                                                            <%= __('noData') %>
-                                                        </td>
-                                                    </tr>
-                                                    <% } %>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                                                    <i class="fas fa-user-md"></i>
+                                                <% } %>
+                                            </div>
+                                            <span class="specialist-name"><%= specialist.name %></span>
+                                        </div>
+                                    </td>
+                                    <td><%= specialist.specialization || '-' %></td>
+                                    <td><%= specialist.email %></td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="3" class="empty-table"><%= __('noData') %></td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
+
+    <style>
+        /* Admin dashboard: similar to specialist dashboard, but not identical */
+        .admin-dashboard {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Center header card (admin-only) */
+        .admin-center-card {
+            padding: 1.5rem;
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .admin-center-icon {
+            width: 54px;
+            height: 54px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(59, 130, 246, 0.10);
+            border: 1px solid rgba(59, 130, 246, 0.18);
+            font-size: 1.5rem;
+        }
+
+        .admin-center-text h2 {
+            margin: 0;
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .admin-center-text p {
+            margin: 0.35rem 0 0;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Shared “clean” sections (copied spirit from specialist dashboard) */
+        .stats-grid-clean {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2.25rem;
+        }
+
+        .stat-card-clean {
+            background: var(--bg-card);
+            padding: 1.75rem 2.25rem;
+            border-radius: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1.25rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            min-height: 110px;
+        }
+
+        .stat-content-clean {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            text-align: start;
+            gap: 0.4rem;
+        }
+
+        .stat-content-clean h2 {
+            font-size: 2.75rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin: 0;
+            line-height: 1;
+        }
+
+        .stat-content-clean p {
+            color: var(--text-secondary);
+            margin: 0;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .stat-icon-clean {
+            font-size: 1.5rem;
+            width: 52px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        .icon-green { color: var(--success); }
+        .icon-blue { color: var(--primary); }
+        .icon-orange { color: var(--warning); }
+
+        .section-clean {
+            margin-bottom: 2rem;
+        }
+
+        .section-header-clean {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            gap: 1rem;
+        }
+
+        .section-header-clean h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .view-all-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .actions-grid-clean {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+
+        .admin-actions-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .action-card-clean {
+            background: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            transition: all 0.2s;
+        }
+
+        .action-card-clean:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .action-card-clean i {
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+
+        .table-container-clean {
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .clean-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .clean-table th {
+            background: rgba(148, 163, 184, 0.10);
+            padding: 1rem 1.5rem;
+            color: var(--text-secondary);
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-align: right;
+        }
+
+        .clean-table td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+            text-align: right;
+        }
+
+        .clean-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .specialist-cell {
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+        }
+
+        .avatar-circle-small {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(148, 163, 184, 0.18);
+            color: rgba(71, 85, 105, 0.9);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            flex: 0 0 auto;
+        }
+
+        .avatar-circle-small img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .specialist-name {
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .empty-table {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid-clean { grid-template-columns: 1fr; }
+            .actions-grid-clean, .admin-actions-grid { grid-template-columns: 1fr; }
+            .admin-center-card { flex-direction: column; align-items: flex-start; }
+        }
+    </style>
 
     <%- include('../partials/layout-end') %>
