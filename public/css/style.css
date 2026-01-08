@@ -3,6 +3,8 @@
    Premium Modern Design with RTL Support
    ====================================== */
 
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap');
+
 :root {
   /* Light Theme (Default) */
   --bg-body: #f8fafc;
@@ -2795,7 +2797,6 @@ html:not([data-theme="dark"]) .stat-icon {
 /* ======================================
    IMPORTS & FONTS
    ====================================== */
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap');
 
 /* ======================================
    CSS VARIABLES (Light Theme)
