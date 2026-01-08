@@ -26,6 +26,14 @@
                     <div class="info-details">
                         <h1>
                             <%= child.name %>
+                            <span class="email-pill" title="ولي الأمر">
+                                <i class="fa-solid fa-user"></i>
+                                <%= (child.parent && child.parent.email) ? child.parent.email : '-' %>
+                            </span>
+                            <span class="email-pill" title="الأخصائي">
+                                <i class="fa-solid fa-user-doctor"></i>
+                                <%= (child.assignedSpecialist && child.assignedSpecialist.email) ? child.assignedSpecialist.email : '-' %>
+                            </span>
                         </h1>
 
                         <div class="parent-info-row">
@@ -43,8 +51,8 @@
                         </div>
 
                         <p class="parent-email">
+                            <i class="fa-solid fa-envelope"></i>
                             <%= (child.parent && child.parent.email) ? child.parent.email : '' %>
-                                <i class="fa-solid fa-envelope"></i>
                         </p>
                     </div>
 
@@ -57,6 +65,19 @@
         </div>
 
         <style>
+            .email-pill {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.4rem;
+                font-size: 0.9rem;
+                font-weight: 600;
+                background: rgba(255,255,255,0.15);
+                color: rgba(255,255,255,0.95);
+                border: 1px solid rgba(255,255,255,0.25);
+                border-radius: 999px;
+                padding: 0.25rem 0.6rem;
+                margin-inline-start: 0.5rem;
+            }
             .mini-avatar-circle {
                 width: 24px;
                 height: 24px;
@@ -262,31 +283,28 @@
                 </div>
             </div>
 
-            <!-- Recent Speech Attempts -->
+            <!-- Final Word Analysis (latest session) -->
             <div class="clean-card">
                 <div class="card-header-clean">
-                    <h3><i class="fa-solid fa-microphone"></i> محاولات النطق الأخيرة</h3>
+                    <h3><i class="fa-solid fa-magnifying-glass"></i> التحليل النهائي للكلمات (آخر جلسة)</h3>
                 </div>
                 <div class="card-body-clean">
-                    <% if (typeof attempts !== 'undefined' && attempts && attempts.length > 0) { %>
+                    <% if (typeof finalWordAnalysis !== 'undefined' && finalWordAnalysis && finalWordAnalysis.length > 0) { %>
                         <table class="clean-blue-table">
                             <thead>
                                 <tr>
-                                    <th>المستهدف</th>
-                                    <th>المنطوق</th>
-                                    <th>النتيجة</th>
+                                    <th>الكلمة/المستهدف</th>
+                                    <th>النطق النهائي</th>
+                                    <th>الدرجة</th>
                                     <th>المصدر</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <% attempts.forEach(function(a) { %>
+                                <% finalWordAnalysis.forEach(function(a) { %>
                                     <tr>
                                         <td><%= a.target || '-' %></td>
                                         <td><%= (a.recognizedText && a.recognizedText.trim()) ? a.recognizedText : '-' %></td>
-                                        <td>
-                                            <% const s = (typeof a.pronunciationScore === 'number') ? a.pronunciationScore : a.score; %>
-                                            <%= (typeof s === 'number') ? Math.round(s) + '%' : '-' %>
-                                        </td>
+                                        <td><%= (typeof a.score === 'number') ? Math.round(a.score) + '%' : '-' %></td>
                                         <td><%= a.analysisSource || '-' %></td>
                                     </tr>
                                 <% }); %>
@@ -294,8 +312,8 @@
                         </table>
                     <% } else { %>
                         <div class="empty-placeholder">
-                            <i class="fa-solid fa-microphone"></i>
-                            <p>لا توجد محاولات نطق بعد</p>
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <p>لا يوجد تحليل نهائي للكلمات في آخر جلسة</p>
                         </div>
                     <% } %>
                 </div>

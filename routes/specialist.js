@@ -566,7 +566,17 @@ router.get('/child/:id/analytics', async (req, res) => {
         }
 
         const progress = progressResponse.data.progress;
-        const child = progress.child || await (async () => {
+
+        // Fetch full child details to display parent/specialist emails
+        let childDetails = null;
+        try {
+            const childResp = await apiClient.authGet(req, `/children/${childId}`);
+            childDetails = childResp?.data?.child || null;
+        } catch (e) {
+            console.warn('Child details fetch failed (will use progress.child):', e.message);
+        }
+
+        const child = childDetails || progress.child || await (async () => {
             // Fallback if child object not full
             // We can assume it is populated as per backend route logic
             return { name: 'Unknown', _id: req.params.id };
@@ -603,11 +613,38 @@ router.get('/child/:id/analytics', async (req, res) => {
         // The view expects progress.sessions.
         progress.sessions = sessions;
 
+        // Final word analysis: take latest session's attempts and keep last attempt per target
+        let finalWordAnalysis = [];
+        try {
+            const sessionsForFinal = Array.isArray(progress.sessions) ? progress.sessions : [];
+            const latestSession = sessionsForFinal.length > 0 ? sessionsForFinal[sessionsForFinal.length - 1] : null;
+            const sAttempts = latestSession && Array.isArray(latestSession.attempts) ? latestSession.attempts : [];
+            const map = new Map(); // target -> last attempt
+            for (const a of sAttempts) {
+                const target = a.word || a.letter || a.vowel || '';
+                if (!target) continue;
+                const ts = new Date(a.timestamp || 0).getTime();
+                const prev = map.get(target);
+                if (!prev || ts >= new Date(prev.timestamp || 0).getTime()) {
+                    map.set(target, a);
+                }
+            }
+            finalWordAnalysis = Array.from(map.entries()).map(([target, a]) => ({
+                target,
+                recognizedText: a.recognizedText,
+                score: typeof a.pronunciationScore === 'number' ? a.pronunciationScore : (typeof a.score === 'number' ? a.score : null),
+                analysisSource: a.analysisSource,
+            }));
+        } catch (e) {
+            console.warn('Failed to compute finalWordAnalysis:', e.message);
+        }
+
         res.render('specialist/child-analytics', {
             title: `تحليلات ${child.name}`,
             child,
             progress,
-            attempts
+            attempts,
+            finalWordAnalysis
         });
     } catch (error) {
         const status = error?.response?.status;
