@@ -788,10 +788,12 @@ router.get('/child/:id/analytics/pdf', async (req, res) => {
         // Child info for the PDF title (optional)
         let childName = '';
         let childAge = null;
+        let childGender = null;
         try {
             const childResp = await apiClient.authGet(req, `/children/${childId}`);
             childName = childResp?.data?.child?.name || '';
             childAge = childResp?.data?.child?.age ?? null;
+            childGender = childResp?.data?.child?.gender ?? null;
         } catch (e) {
             // optional
         }
@@ -859,6 +861,9 @@ router.get('/child/:id/analytics/pdf', async (req, res) => {
 
         const childInitial = (childName || 'طفل').trim().slice(0, 1).toLowerCase();
 
+        const normalizedGender = (childGender === 'female' || childGender === 'male') ? childGender : 'male';
+        const childGenderText = normalizedGender === 'female' ? 'بنت' : 'ولد';
+
         const tryReadFontBase64 = (candidates) => {
             for (const p of candidates) {
                 try {
@@ -899,6 +904,8 @@ router.get('/child/:id/analytics/pdf', async (req, res) => {
                 // Current template variables
                 cairoFontRegular,
                 cairoFontBold,
+                childGender: normalizedGender,
+                childGenderText,
                 childName: childName || '---',
                 childInitial,
                 childAgeText,
@@ -949,7 +956,7 @@ router.get('/child/:id/analytics/pdf', async (req, res) => {
             const pdfBuffer = await page.pdf({
                 format: 'A4',
                 printBackground: true,
-                                landscape: true,
+                landscape: false,
                                 scale: 1,
                                 margin: { top: '0mm', right: '0mm', bottom: '0mm', left: '0mm' },
             });

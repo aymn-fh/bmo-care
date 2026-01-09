@@ -26,6 +26,11 @@
       --text: #0f172a;
       --muted: #64748b;
       --border: #e5e7eb;
+
+      --blue-soft: color-mix(in srgb, var(--blue) 12%, white);
+      --primary: <%= (typeof childGender !== 'undefined' && childGender === 'female') ? 'var(--pink)' : 'var(--blue)' %>;
+      --primary-soft: <%= (typeof childGender !== 'undefined' && childGender === 'female') ? 'var(--pink-soft)' : 'var(--blue-soft)' %>;
+      --primary-light: color-mix(in srgb, var(--primary) 70%, white);
     }
 
     * {
@@ -44,9 +49,9 @@
     }
 
     .page {
-      width: 297mm;
-      min-height: 210mm;
-      padding: 18mm 20mm;
+      width: 210mm;
+      min-height: 297mm;
+      padding: 16mm 16mm;
     }
 
     /* Header */
@@ -60,7 +65,7 @@
     .logo {
       font-size: 20pt;
       font-weight: 700;
-      color: var(--blue);
+      color: var(--primary);
     }
 
     .app-desc {
@@ -70,14 +75,14 @@
 
     .line {
       height: 1.2pt;
-      background: var(--blue);
+      background: var(--primary);
       margin-bottom: 6mm;
     }
 
     /* Report card */
     .report {
-      width: 90mm;
-      background: linear-gradient(135deg, #f43f5e, #ec4899);
+      width: 100%;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
       color: #fff;
       border-radius: 6mm;
       padding: 5mm 6mm;
@@ -97,7 +102,7 @@
 
     /* Child card */
     .card {
-      background: var(--pink-soft);
+      background: var(--primary-soft);
       border-radius: 6mm;
       padding: 5mm;
       margin-bottom: 8mm;
@@ -111,7 +116,7 @@
     }
 
     .badge {
-      background: #fb7185;
+      background: var(--primary);
       color: #fff;
       padding: 1.8mm 4mm;
       border-radius: 100mm;
@@ -129,7 +134,7 @@
       width: 10mm;
       height: 10mm;
       border-radius: 50%;
-      background: #ec4899;
+      background: var(--primary);
       color: #fff;
       display: flex;
       align-items: center;
@@ -227,7 +232,7 @@
 
     .metrics {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 3mm;
       margin-bottom: 6mm;
     }
@@ -262,7 +267,7 @@
 
     .two-col {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr;
       gap: 5mm;
       margin-bottom: 6mm;
     }
@@ -278,7 +283,7 @@
       margin: 0 0 3mm;
       font-size: 10pt;
       font-weight: 800;
-      color: var(--blue);
+      color: var(--primary);
     }
 
     .kv {
@@ -321,7 +326,7 @@
     }
 
     @page {
-      size: A4 landscape;
+      size: A4 portrait;
       margin: 0;
     }
   </style>
@@ -338,9 +343,8 @@
   <div class="line"></div>
 
   <div class="report">
-    <h2>تقرير تفصيلي</h2>
-    <small>الطفل: <%= childName %></small>
-    <small>تاريخ التقرير: <%= reportDate %></small>
+    <h2>تقرير تحليلي</h2>
+    <small>الطفل: <%= childName %> • الجنس: <%= (typeof childGenderText !== 'undefined' ? childGenderText : '-') %> • تاريخ التقرير: <%= reportDate %></small>
   </div>
 
   <div class="card">
@@ -439,11 +443,11 @@
   </div>
 
   <div class="recs">
-    <h3>التوصيات</h3>
+    <h3>توصيات مهنية</h3>
     <ul>
-      <li>الاستمرار في الجلسات اليومية.</li>
-      <li>زيادة عدد الجلسات الأسبوعية.</li>
-      <li>متابعة التقدم بشكل دوري.</li>
+      <li>الالتزام بالجلسات اليومية وفق خطة ثابتة.</li>
+      <li>رفع عدد الجلسات الأسبوعية تدريجيًا حسب الاستجابة.</li>
+      <li>مراجعة التقدّم أسبوعيًا وتوثيقه مع الأخصائي.</li>
     </ul>
   </div>
 
@@ -458,7 +462,10 @@
 
     <div class="line"></div>
 
-    <div class="section-title">آخر الجلسات</div>
+    <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4mm;">
+      <div class="section-title" style="margin:0;">آخر الجلسات</div>
+      <div style="font-size:9pt; color: var(--muted); font-weight:700;">الطفل: <%= childName %> • <%= reportDate %></div>
+    </div>
     <table class="sessions-table">
       <thead>
         <tr>
