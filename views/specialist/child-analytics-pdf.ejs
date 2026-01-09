@@ -42,7 +42,7 @@
     }
 
     .page {
-      padding: 28px 36px 40px;
+      padding: 22px 28px 26px;
     }
 
     .top {
@@ -67,33 +67,45 @@
     }
 
     .rule {
-      margin: 10px 0 18px;
+      margin: 10px 0 14px;
       height: 2px;
       background: var(--blue);
       opacity: 0.85;
     }
 
+    .content-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .main-col {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .side-col {
+      min-width: 0;
+    }
+
     .report-card {
-      width: 260px;
+      width: 100%;
       border-radius: 14px;
-      padding: 18px 18px 14px;
+      padding: 16px 16px 14px;
       color: #fff;
       background: linear-gradient(135deg, var(--pink1), var(--pink2));
-      margin-inline-start: auto;
+      box-shadow: 0 10px 18px rgba(15, 23, 42, 0.08);
     }
 
     .report-title {
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 800;
       display: flex;
       justify-content: space-between;
       align-items: center;
-    }
-
-    .report-title .x {
-      font-weight: 800;
-      font-size: 18px;
-      opacity: 0.9;
     }
 
     .report-meta {
@@ -104,11 +116,11 @@
     }
 
     .child-summary {
-      margin-top: 18px;
       border-radius: 14px;
       background: var(--card);
       border: 1px solid #f1f5f9;
       overflow: hidden;
+      box-shadow: 0 10px 18px rgba(15, 23, 42, 0.06);
     }
 
     .child-summary-top {
@@ -218,11 +230,11 @@
     }
 
     .recs {
-      margin-top: 18px;
-      border: 2px solid var(--warn);
+      border: 1px solid rgba(245, 158, 11, 0.35);
       background: #fff7ed;
       border-radius: 14px;
       padding: 14px 16px;
+      box-shadow: 0 10px 18px rgba(15, 23, 42, 0.05);
     }
 
     .recs-title {
@@ -244,7 +256,7 @@
     }
 
     /* Ensure crisp print */
-    @page { size: A4; margin: 16mm; }
+    @page { size: A4 landscape; margin: 16mm; }
   </style>
 </head>
 <body>
@@ -255,66 +267,71 @@
     </div>
     <div class="rule"></div>
 
-    <div class="report-card">
-      <div class="report-title">
-        <span>تقرير تفصيلي</span>
-        <span class="x">✕</span>
-      </div>
-      <div class="report-meta">
-        <div>الطفل: <%= childName %></div>
-        <div>تاريخ التقرير: <%= reportDate %></div>
-      </div>
-    </div>
-
-    <div class="child-summary">
-      <div class="child-summary-top">
-        <div class="pill"><%= successRate %>% نجاح تام</div>
-        <div class="child-ident">
-          <div>
-            <div class="child-name"><%= childName %></div>
-            <div class="child-age"><%= childAgeText %></div>
+    <div class="content-grid">
+      <div class="main-col">
+        <div class="report-card">
+          <div class="report-title">
+            <span>تقرير تفصيلي</span>
           </div>
-          <div class="avatar"><%= childInitial %></div>
+          <div class="report-meta">
+            <div>الطفل: <%= childName %></div>
+            <div>تاريخ التقرير: <%= reportDate %></div>
+          </div>
+        </div>
+
+        <div class="child-summary">
+          <div class="child-summary-top">
+            <div class="pill"><%= successRate %>% نجاح تام</div>
+            <div class="child-ident">
+              <div>
+                <div class="child-name"><%= childName %></div>
+                <div class="child-age"><%= childAgeText %></div>
+              </div>
+              <div class="avatar"><%= childInitial %></div>
+            </div>
+          </div>
+
+          <div style="padding: 10px 16px 0;">
+            <table class="child-table">
+              <thead>
+                <tr>
+                  <th>متوسط الدرجة</th>
+                  <th>معدل النجاح</th>
+                  <th>وقت اللعب</th>
+                  <th>الجلسات</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><%= averageScore %></td>
+                  <td><%= successRate %>%</td>
+                  <td><%= playTimeText %></td>
+                  <td><%= totalSessions %></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="progress-row">
+            <div class="progress-labels">
+              <div class="progress-side"><span>النطق النهائي</span><span>0%</span></div>
+              <div class="progress-side"><span><%= successRate %>%</span><span>النطق</span></div>
+            </div>
+            <div class="bar"><div></div></div>
+          </div>
         </div>
       </div>
 
-      <div style="padding: 10px 16px 0;">
-        <table class="child-table">
-          <thead>
-            <tr>
-              <th>متوسط الدرجة</th>
-              <th>معدل النجاح</th>
-              <th>وقت اللعب</th>
-              <th>الجلسات</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><%= averageScore %></td>
-              <td><%= successRate %>%</td>
-              <td><%= playTimeText %></td>
-              <td><%= totalSessions %></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="progress-row">
-        <div class="progress-labels">
-          <div class="progress-side"><span>النطق النهائي</span><span>0%</span></div>
-          <div class="progress-side"><span><%= successRate %>%</span><span>النطق</span></div>
+      <div class="side-col">
+        <div class="recs">
+          <div class="recs-title">التوصيات</div>
+          <ul>
+            <li>الطفل يحتاج دعماً إضافياً.</li>
+            <li>زيادة عدد الجلسات الأسبوعية.</li>
+            <li>زيادة عدد الجلسات للحصول على نتائج أفضل.</li>
+          </ul>
         </div>
-        <div class="bar"><div></div></div>
       </div>
-    </div>
-
-    <div class="recs">
-      <div class="recs-title">التوصيات</div>
-      <ul>
-        <li>الطفل يحتاج دعماً إضافياً.</li>
-        <li>زيادة عدد الجلسات الأسبوعية.</li>
-        <li>زيادة عدد الجلسات للحصول على نتائج أفضل.</li>
-      </ul>
     </div>
   </div>
 </body>

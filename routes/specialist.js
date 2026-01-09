@@ -859,6 +859,7 @@ router.get('/child/:id/analytics/pdf', async (req, res) => {
 
             const pdfBuffer = await page.pdf({
                 format: 'A4',
+                                landscape: true,
                 printBackground: true,
                 displayHeaderFooter: true,
                 headerTemplate: '<div></div>',
@@ -870,7 +871,7 @@ router.get('/child/:id/analytics/pdf', async (req, res) => {
                     </div>
                   </div>
                 `,
-                margin: { top: '14mm', right: '12mm', bottom: '16mm', left: '12mm' }
+                margin: { top: '12mm', right: '12mm', bottom: '14mm', left: '12mm' }
             });
 
             // Puppeteer may return a Uint8Array in some environments.
