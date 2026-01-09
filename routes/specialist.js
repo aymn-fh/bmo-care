@@ -775,6 +775,7 @@ router.get('/child/:id/analytics/pdf', async (req, res) => {
         const totalSessions = sessions.length;
         const totalAttempts = sessions.reduce((sum, s) => sum + (Number(s.totalAttempts) || 0), 0);
         const successfulAttempts = sessions.reduce((sum, s) => sum + (Number(s.successfulAttempts) || 0), 0);
+        const failedAttempts = Math.max(0, totalAttempts - successfulAttempts);
 
         const successRate = totalAttempts > 0
             ? Math.round((successfulAttempts / totalAttempts) * 100)
@@ -797,6 +798,58 @@ router.get('/child/:id/analytics/pdf', async (req, res) => {
 
         const totalDuration = sessions.reduce((sum, s) => sum + (Number(s.duration) || 0), 0);
         const playMinutes = Math.max(0, Math.round(totalDuration));
+
+        const avgSessionMinutes = totalSessions > 0
+            ? Math.max(0, Math.round((totalDuration / totalSessions) * 10) / 10)
+            : 0;
+
+        const formatDate = (d) => {
+            try {
+                const dt = new Date(d);
+                if (Number.isNaN(dt.getTime())) return '';
+                return `${String(dt.getDate()).padStart(2, '0')}/${String(dt.getMonth() + 1).padStart(2, '0')}/${dt.getFullYear()}`;
+            } catch {
+                return '';
+            }
+        };
+
+        const withDate = sessions
+            .map((s) => ({
+                ...s,
+                _t: new Date(s.sessionDate || 0).getTime(),
+            }))
+            .filter((s) => Number.isFinite(s._t) && s._t > 0)
+            .sort((a, b) => a._t - b._t);
+
+        const firstSessionDate = withDate.length ? formatDate(withDate[0].sessionDate) : '';
+        const lastSessionDate = withDate.length ? formatDate(withDate[withDate.length - 1].sessionDate) : '';
+
+        const bestSession = sessions.reduce((best, s) => {
+            if (!best) return s;
+            return (Number(s.averageScore) || 0) > (Number(best.averageScore) || 0) ? s : best;
+        }, null);
+
+        const worstSession = sessions.reduce((worst, s) => {
+            if (!worst) return s;
+            return (Number(s.averageScore) || 0) < (Number(worst.averageScore) || 0) ? s : worst;
+        }, null);
+
+        const lastSessions = withDate.slice(-8).reverse().map((s, idx) => ({
+            index: (withDate.length - idx),
+            date: formatDate(s.sessionDate) || '-',
+            attempts: Number(s.totalAttempts) || 0,
+            successRate: Math.round(Number(s.successRate) || 0),
+            averageScore: Math.round(Number(s.averageScore) || 0),
+            duration: Math.max(0, Math.round(Number(s.duration) || 0)),
+        }));
+
+        const recent = withDate.slice(-5);
+        const recentAvgScore = recent.length
+            ? Math.round(recent.reduce((sum, s) => sum + (Number(s.averageScore) || 0), 0) / recent.length)
+            : 0;
+        const recentSuccessRate = recent.length
+            ? Math.round(recent.reduce((sum, s) => sum + (Number(s.successRate) || 0), 0) / recent.length)
+            : 0;
 
         const now = new Date();
         const reportDate = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
@@ -851,9 +904,32 @@ router.get('/child/:id/analytics/pdf', async (req, res) => {
                 childAgeText,
                 reportDate,
                 totalSessions,
+                totalAttempts,
+                successfulAttempts,
+                failedAttempts,
                 averageScore,
                 successRate,
                 playTimeText: `${playMinutes} دقيقة`,
+                avgSessionMinutes,
+                firstSessionDate,
+                lastSessionDate,
+                bestSession: bestSession
+                    ? {
+                        date: formatDate(bestSession.sessionDate) || '-',
+                        averageScore: Math.round(Number(bestSession.averageScore) || 0),
+                        successRate: Math.round(Number(bestSession.successRate) || 0),
+                    }
+                    : null,
+                worstSession: worstSession
+                    ? {
+                        date: formatDate(worstSession.sessionDate) || '-',
+                        averageScore: Math.round(Number(worstSession.averageScore) || 0),
+                        successRate: Math.round(Number(worstSession.successRate) || 0),
+                    }
+                    : null,
+                lastSessions,
+                recentAvgScore,
+                recentSuccessRate,
             },
             { async: true }
         );

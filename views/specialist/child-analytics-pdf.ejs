@@ -217,6 +217,92 @@
       color: #92400e;
     }
 
+    /* Extra analytics */
+    .section-title {
+      margin: 0 0 3mm;
+      font-size: 11pt;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 3mm;
+      margin-bottom: 6mm;
+    }
+
+    .metric {
+      background: #ffffff;
+      border: 0.5pt solid var(--border);
+      border-radius: 4mm;
+      padding: 3.5mm;
+    }
+
+    .metric .k {
+      font-size: 8.5pt;
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: 1mm;
+    }
+
+    .metric .v {
+      font-size: 12pt;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .metric .s {
+      font-size: 8.5pt;
+      color: var(--muted);
+      font-weight: 700;
+      margin-top: 1mm;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5mm;
+      margin-bottom: 6mm;
+    }
+
+    .box {
+      background: #ffffff;
+      border: 0.5pt solid var(--border);
+      border-radius: 4mm;
+      padding: 4mm;
+    }
+
+    .box h4 {
+      margin: 0 0 3mm;
+      font-size: 10pt;
+      font-weight: 800;
+      color: var(--blue);
+    }
+
+    .kv {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 2mm 6mm;
+      font-size: 9pt;
+      font-weight: 700;
+    }
+
+    .kv .key {
+      color: var(--muted);
+    }
+
+    .kv .val {
+      color: var(--text);
+      text-align: left;
+      direction: ltr;
+    }
+
+    .sessions-table td {
+      font-weight: 700;
+    }
+
     @page {
       size: A4 landscape;
       margin: 0;
@@ -270,6 +356,92 @@
         </tr>
       </tbody>
     </table>
+
+    <div style="margin-top:6mm;">
+      <div class="section-title">تحليلات إضافية</div>
+
+      <div class="metrics">
+        <div class="metric">
+          <div class="k">المحاولات (الإجمالي)</div>
+          <div class="v"><%= typeof totalAttempts !== 'undefined' ? totalAttempts : 0 %></div>
+          <div class="s">ناجحة: <%= typeof successfulAttempts !== 'undefined' ? successfulAttempts : 0 %> • فاشلة: <%= typeof failedAttempts !== 'undefined' ? failedAttempts : 0 %></div>
+        </div>
+
+        <div class="metric">
+          <div class="k">متوسط وقت الجلسة</div>
+          <div class="v"><%= typeof avgSessionMinutes !== 'undefined' ? avgSessionMinutes : 0 %></div>
+          <div class="s">دقيقة</div>
+        </div>
+
+        <div class="metric">
+          <div class="k">آخر 5 جلسات (متوسط)</div>
+          <div class="v"><%= typeof recentSuccessRate !== 'undefined' ? recentSuccessRate : 0 %>%</div>
+          <div class="s">متوسط الدرجة: <%= typeof recentAvgScore !== 'undefined' ? recentAvgScore : 0 %></div>
+        </div>
+
+        <div class="metric">
+          <div class="k">آخر نشاط</div>
+          <div class="v"><%= lastSessionDate || '-' %></div>
+          <div class="s">أول نشاط: <%= firstSessionDate || '-' %></div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="box">
+          <h4>أفضل جلسة</h4>
+          <% if (bestSession) { %>
+            <div class="kv">
+              <div class="key">التاريخ</div><div class="val"><%= bestSession.date %></div>
+              <div class="key">نسبة النجاح</div><div class="val"><%= bestSession.successRate %>%</div>
+              <div class="key">متوسط الدرجة</div><div class="val"><%= bestSession.averageScore %></div>
+            </div>
+          <% } else { %>
+            <div style="font-size:9pt; color: var(--muted); font-weight:700;">لا توجد بيانات جلسات.</div>
+          <% } %>
+        </div>
+
+        <div class="box">
+          <h4>أقل جلسة</h4>
+          <% if (worstSession) { %>
+            <div class="kv">
+              <div class="key">التاريخ</div><div class="val"><%= worstSession.date %></div>
+              <div class="key">نسبة النجاح</div><div class="val"><%= worstSession.successRate %>%</div>
+              <div class="key">متوسط الدرجة</div><div class="val"><%= worstSession.averageScore %></div>
+            </div>
+          <% } else { %>
+            <div style="font-size:9pt; color: var(--muted); font-weight:700;">لا توجد بيانات جلسات.</div>
+          <% } %>
+        </div>
+      </div>
+
+      <% if (Array.isArray(lastSessions) && lastSessions.length) { %>
+        <div class="section-title" style="margin-top:2mm;">آخر الجلسات</div>
+        <table class="sessions-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>التاريخ</th>
+              <th>المحاولات</th>
+              <th>النجاح</th>
+              <th>متوسط الدرجة</th>
+              <th>المدة (د)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% lastSessions.forEach(function(s) { %>
+              <tr>
+                <td><%= s.index %></td>
+                <td><%= s.date %></td>
+                <td><%= s.attempts %></td>
+                <td><%= s.successRate %>%</td>
+                <td><%= s.averageScore %></td>
+                <td><%= s.duration %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
 
     <div class="progress">
       التقدم في النطق
