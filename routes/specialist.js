@@ -873,14 +873,15 @@ router.get('/child/:id/analytics/pdf', async (req, res) => {
                 margin: { top: '14mm', right: '12mm', bottom: '16mm', left: '12mm' }
             });
 
+            // Puppeteer may return a Uint8Array in some environments.
+            const pdfBuf = Buffer.isBuffer(pdfBuffer) ? pdfBuffer : Buffer.from(pdfBuffer);
+
                         // Guard: make sure we actually generated a PDF.
-                        const isPdf = Buffer.isBuffer(pdfBuffer) && pdfBuffer.slice(0, 4).toString('utf8') === '%PDF';
+            const isPdf = pdfBuf.slice(0, 4).toString('utf8') === '%PDF';
                         if (!isPdf) {
                                 const debug = req.query.debug === '1' || process.env.NODE_ENV !== 'production';
                                 if (debug) {
-                                        const head = Buffer.isBuffer(pdfBuffer)
-                                                ? pdfBuffer.slice(0, 80).toString('utf8')
-                                                : String(pdfBuffer).slice(0, 80);
+                    const head = pdfBuf.slice(0, 80).toString('utf8');
                                         throw new Error(`Generated output is not a PDF. Head=${JSON.stringify(head)}`);
                                 }
                                 throw new Error('Generated output is not a PDF');
@@ -888,8 +889,8 @@ router.get('/child/:id/analytics/pdf', async (req, res) => {
 
                         res.setHeader('Content-Type', 'application/pdf');
                         res.setHeader('Content-Disposition', `attachment; filename=child-analytics-${childId}.pdf`);
-                        res.setHeader('Content-Length', String(pdfBuffer.length));
-                        res.status(200).end(pdfBuffer);
+            res.setHeader('Content-Length', String(pdfBuf.length));
+            res.status(200).end(pdfBuf);
         } finally {
             await browser.close();
         }
