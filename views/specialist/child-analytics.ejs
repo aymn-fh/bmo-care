@@ -92,12 +92,18 @@
                 <div class="chart-wrapper-small">
                     <canvas id="successChart"></canvas>
                 </div>
+                <div class="text-center" style="padding: 0.25rem 1rem 1rem; color: #64748b; font-size: 0.9rem;">
+                    <span id="successSuccessful">--</span>
+                    <span style="margin: 0 0.35rem;">/</span>
+                    <span id="successTotal">--</span>
+                    <span style="margin-right: 0.5rem;">محاولة ناجحة</span>
+                </div>
             </div>
 
             <!-- Difficulty -->
             <div class="chart-box-white small-box">
                 <div class="chart-header-simple">
-                    <h3>توزيع الصعوبة</h3>
+                    <h3>توزيع الصعوبة (حروف / كلمات)</h3>
                 </div>
                 <div class="chart-wrapper-small">
                     <canvas id="difficultyChart"></canvas>
@@ -423,6 +429,13 @@
             document.getElementById('headerSuccessRate').textContent = stats.successRate + '%';
             document.getElementById('headerAvgScore').textContent = stats.averageScore + '%';
             document.getElementById('headerTotalSessions').textContent = stats.totalSessions;
+
+            const successSuccessfulEl = document.getElementById('successSuccessful');
+            const successTotalEl = document.getElementById('successTotal');
+            if (successSuccessfulEl && successTotalEl) {
+                successSuccessfulEl.textContent = stats.successfulAttempts ?? 0;
+                successTotalEl.textContent = stats.totalAttempts ?? 0;
+            }
         }
 
         function createCharts(chartData) {
@@ -497,13 +510,26 @@
                 data: {
                     labels: ['سهل', 'متوسط', 'صعب'],
                     datasets: [{
-                        label: 'الجلسات',
-                        data: [chartData.difficulty.easy, chartData.difficulty.medium, chartData.difficulty.hard],
-                        backgroundColor: ['#22c55e', '#f59e0b', '#ef4444'],
+                        label: 'حروف',
+                        data: [
+                            chartData.difficulty?.letters?.easy || 0,
+                            chartData.difficulty?.letters?.medium || 0,
+                            chartData.difficulty?.letters?.hard || 0
+                        ],
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 4
+                    }, {
+                        label: 'كلمات',
+                        data: [
+                            chartData.difficulty?.words?.easy || 0,
+                            chartData.difficulty?.words?.medium || 0,
+                            chartData.difficulty?.words?.hard || 0
+                        ],
+                        backgroundColor: '#f59e0b',
                         borderRadius: 4
                     }]
                 },
-                options: { plugins: { legend: { display: false } } }
+                options: { plugins: { legend: { display: true, labels: { boxWidth: 10 } } } }
             });
         }
 
@@ -513,14 +539,21 @@
                 tbody.innerHTML = '<tr><td colspan="4" class="text-center">لا توجد بيانات</td></tr>';
                 return;
             }
+            const names = {
+                pronunciation: 'النطق',
+                accuracy: 'الدقة',
+                fluency: 'الطلاقة',
+                completeness: 'الاكتمال'
+            };
+
             tbody.innerHTML = Object.entries(skills).map(([k, v]) => `
             <tr>
-                <td>${k === 'general' ? 'عام' : 'نشاط ' + k}</td>
-                <td>${v.sessionsCount}</td>
-                <td>${v.averageScore}%</td>
+                <td>${names[k] || k}</td>
+                <td>${v.sessionsCount ?? 0}</td>
+                <td>${v.averageScore ?? 0}%</td>
                 <td>
                     <div class="table-progress">
-                        <div style="width: ${v.averageScore}%"></div>
+                        <div style="width: ${(v.averageScore ?? 0)}%"></div>
                     </div>
                 </td>
             </tr>

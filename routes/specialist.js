@@ -601,7 +601,7 @@ router.get('/child/:id/analytics', async (req, res) => {
         // Attempts: prefer /progress/attempts; fallback to flattening progress.sessions.
         let attempts = [];
         try {
-            const attemptsResponse = await apiClient.authGet(req, `/progress/attempts/${childId}?limit=50`);
+            const attemptsResponse = await apiClient.authGet(req, `/progress/attempts/${childId}?limit=200`);
             attempts = (attemptsResponse?.data?.success)
                 ? (attemptsResponse.data.attempts || [])
                 : [];
@@ -610,7 +610,45 @@ router.get('/child/:id/analytics', async (req, res) => {
             if (status !== 404) {
                 console.warn('Attempts endpoint failed; falling back to progress.sessions:', e.message);
             }
-            attempts = _flattenAttemptsFromProgress(progress.sessions, 50);
+            attempts = _flattenAttemptsFromProgress(progress.sessions, 200);
+        }
+
+        // Build target-based progress for letters/words (only specialist-selected targets).
+        try {
+            const targetLetters = Array.isArray(child.targetLetters) ? child.targetLetters : [];
+            const targetWords = Array.isArray(child.targetWords) ? child.targetWords : [];
+
+            const computeTargetProgress = (targets, kind) => {
+                const rows = [];
+                for (const t of targets) {
+                    const target = String(t || '').trim();
+                    if (!target) continue;
+                    const relevant = attempts.filter(a => String(a?.[kind] || '').trim() === target);
+                    const total = relevant.length;
+                    const success = relevant.reduce((sum, a) => sum + (a?.success ? 1 : 0), 0);
+                    const successRate = total > 0 ? (success / total) : 0;
+                    const mastered = total >= 3 && successRate >= 0.8;
+                    rows.push({
+                        [kind]: target,
+                        attempts: total,
+                        successRate,
+                        mastered,
+                    });
+                }
+
+                rows.sort((a, b) => {
+                    const ma = a.mastered ? 1 : 0;
+                    const mb = b.mastered ? 1 : 0;
+                    if (mb !== ma) return mb - ma;
+                    return (b.attempts || 0) - (a.attempts || 0);
+                });
+                return rows;
+            };
+
+            progress.letterProgress = computeTargetProgress(targetLetters, 'letter');
+            progress.wordProgress = computeTargetProgress(targetWords, 'word');
+        } catch (e) {
+            console.warn('Failed to compute target progress:', e.message);
         }
 
         // The view expects progress.sessions.
@@ -689,14 +727,58 @@ router.get('/child/:id/analytics/data', async (req, res) => {
             ? Math.round(sessions.reduce((sum, s) => sum + (Number(s.averageScore) || 0), 0) / totalSessions)
             : 0;
 
-        // Simple difficulty buckets based on averageScore.
-        const difficulty = sessions.reduce((acc, s) => {
-            const score = Number(s.averageScore) || 0;
-            if (score >= 80) acc.easy += 1;
-            else if (score >= 50) acc.medium += 1;
-            else acc.hard += 1;
+        // Attempts: use these to derive skills + separate difficulty for letters vs words.
+        let attempts = [];
+        try {
+            const attemptsResponse = await apiClient.authGet(req, `/progress/attempts/${childId}?limit=200`);
+            attempts = (attemptsResponse?.data?.success)
+                ? (attemptsResponse.data.attempts || [])
+                : [];
+        } catch (e) {
+            const status = e?.response?.status;
+            if (status !== 404) {
+                console.warn('Analytics data attempts endpoint failed; falling back to /progress/child:', e.message);
+            }
+            const progressResponse = await apiClient.authGet(req, `/progress/child/${childId}`);
+            const progress = progressResponse?.data?.progress;
+            attempts = _flattenAttemptsFromProgress(progress?.sessions, 200);
+        }
+
+        const getAttemptScore = (a) => {
+            if (!a || typeof a !== 'object') return undefined;
+            const p = a.pronunciationScore;
+            if (typeof p === 'number' && Number.isFinite(p)) return p;
+            const s = a.score;
+            if (typeof s === 'number' && Number.isFinite(s)) return s;
+            const acc = a.accuracyScore;
+            const flu = a.fluencyScore;
+            const comp = a.completenessScore;
+            const parts = [acc, flu, comp].filter(v => typeof v === 'number' && Number.isFinite(v));
+            if (parts.length > 0) return parts.reduce((x, y) => x + y, 0) / parts.length;
+            return undefined;
+        };
+
+        const bucketize = (score) => {
+            const v = Number(score);
+            if (!Number.isFinite(v)) return null;
+            if (v >= 80) return 'easy';
+            if (v >= 50) return 'medium';
+            return 'hard';
+        };
+
+        const difficulty = attempts.reduce((acc, a) => {
+            const isWord = !!a.word;
+            const isLetter = !!a.letter;
+            const key = isWord ? 'words' : (isLetter ? 'letters' : null);
+            if (!key) return acc;
+            const b = bucketize(getAttemptScore(a));
+            if (!b) return acc;
+            acc[key][b] += 1;
             return acc;
-        }, { easy: 0, medium: 0, hard: 0 });
+        }, {
+            letters: { easy: 0, medium: 0, hard: 0 },
+            words: { easy: 0, medium: 0, hard: 0 },
+        });
 
         // Timeline: last 20 sessions
         const last = sessions.slice(-20);
@@ -704,26 +786,51 @@ router.get('/child/:id/analytics/data', async (req, res) => {
             labels: last.map((s, i) => {
                 const d = s.sessionDate ? new Date(s.sessionDate) : null;
                 if (d && !Number.isNaN(d.getTime())) {
-                    return d.toLocaleDateString('ar-SA');
+                    return d.toLocaleDateString('ar-SA-u-ca-gregory', { year: 'numeric', month: '2-digit', day: '2-digit' });
                 }
                 return `جلسة ${i + 1}`;
             }),
             data: last.map(s => Math.round(Number(s.averageScore) || 0)),
         };
 
-        // Skills: minimal "general" bucket so the UI has data.
-        const skillsProgress = {
-            general: {
-                sessionsCount: totalSessions,
-                averageScore,
+        const skillDefs = [
+            { key: 'pronunciation', field: 'pronunciationScore' },
+            { key: 'accuracy', field: 'accuracyScore' },
+            { key: 'fluency', field: 'fluencyScore' },
+            { key: 'completeness', field: 'completenessScore' },
+        ];
+
+        const skillsProgress = skillDefs.reduce((acc, def) => {
+            const values = [];
+            const sessionKeys = new Set();
+            for (const a of attempts) {
+                const v = a?.[def.field];
+                if (typeof v !== 'number' || !Number.isFinite(v)) continue;
+                values.push(v);
+                const dt = new Date(a.sessionDate || a.timestamp || 0);
+                if (!Number.isNaN(dt.getTime())) sessionKeys.add(dt.toISOString().slice(0, 10));
             }
-        };
+            const avg = values.length > 0
+                ? Math.round(values.reduce((x, y) => x + y, 0) / values.length)
+                : 0;
+
+            acc[def.key] = {
+                sessionsCount: sessionKeys.size,
+                averageScore: avg,
+            };
+            return acc;
+        }, {});
 
         const chartData = {
             timeline,
             skills: {
-                labels: ['عام'],
-                data: [averageScore],
+                labels: ['النطق', 'الدقة', 'الطلاقة', 'الاكتمال'],
+                data: [
+                    skillsProgress.pronunciation?.averageScore || 0,
+                    skillsProgress.accuracy?.averageScore || 0,
+                    skillsProgress.fluency?.averageScore || 0,
+                    skillsProgress.completeness?.averageScore || 0,
+                ],
             },
             successRate: {
                 labels: ['نجاح', 'محاولات أخرى'],
