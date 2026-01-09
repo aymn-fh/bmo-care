@@ -21,37 +21,41 @@
       --blue: #4f6ef7;
       --pink: #ec3b7c;
       --pink-soft: #fde7ef;
-      --orange: #f59e0b;
       --orange-soft: #fff3e0;
       --text: #0f172a;
       --muted: #64748b;
       --border: #e5e7eb;
 
       --blue-soft: color-mix(in srgb, var(--blue) 12%, white);
-      --primary: <%= (typeof childGender !== 'undefined' && childGender === 'female') ? 'var(--pink)' : 'var(--blue)' %>;
-      --primary-soft: <%= (typeof childGender !== 'undefined' && childGender === 'female') ? 'var(--pink-soft)' : 'var(--blue-soft)' %>;
+      --primary: <%= (childGender === 'female') ? 'var(--pink)' : 'var(--blue)' %>;
+      --primary-soft: <%= (childGender === 'female') ? 'var(--pink-soft)' : 'var(--blue-soft)' %>;
       --primary-light: color-mix(in srgb, var(--primary) 70%, white);
     }
 
     * {
+      box-sizing: border-box;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
-      box-sizing: border-box;
     }
 
     body {
       margin: 0;
-      background: #ffffff;
-      font-family: 'Cairo', 'Arial', sans-serif;
-      color: var(--text);
+      font-family: 'Cairo', Arial, sans-serif;
       font-size: 11pt;
-      line-height: 1.6;
+      line-height: 1.5;
+      color: var(--text);
     }
 
     .page {
       width: 210mm;
       min-height: 297mm;
-      padding: 16mm 16mm;
+      padding: 12mm 14mm;
+    }
+
+    /* منع كسر الصفحة داخل العناصر */
+    .report, .card, .metric, .box, .session-card {
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
 
     /* Header */
@@ -59,7 +63,7 @@
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
-      margin-bottom: 4mm;
+      margin-bottom: 2.5mm;
     }
 
     .logo {
@@ -69,56 +73,54 @@
     }
 
     .app-desc {
-      font-size: 9.5pt;
+      font-size: 9pt;
       color: var(--muted);
     }
 
     .line {
-      height: 1.2pt;
+      height: 1pt;
       background: var(--primary);
-      margin-bottom: 6mm;
+      margin-bottom: 4mm;
     }
 
-    /* Report card */
+    /* Report */
     .report {
-      width: 100%;
       background: linear-gradient(135deg, var(--primary), var(--primary-light));
       color: #fff;
       border-radius: 6mm;
-      padding: 5mm 6mm;
-      margin-bottom: 6mm;
+      padding: 4mm 5mm;
+      margin-bottom: 4mm;
     }
 
     .report h2 {
-      margin: 0 0 3mm;
+      margin: 0 0 2mm;
       font-size: 13pt;
       font-weight: 700;
     }
 
     .report small {
-      display: block;
       font-size: 9pt;
     }
 
-    /* Child card */
+    /* Card */
     .card {
       background: var(--primary-soft);
       border-radius: 6mm;
-      padding: 5mm;
-      margin-bottom: 8mm;
+      padding: 4mm;
+      margin-bottom: 5mm;
     }
 
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 4mm;
+      margin-bottom: 3mm;
     }
 
     .badge {
       background: var(--primary);
       color: #fff;
-      padding: 1.8mm 4mm;
+      padding: 1.5mm 4mm;
       border-radius: 100mm;
       font-size: 8.5pt;
       font-weight: 700;
@@ -131,16 +133,16 @@
     }
 
     .avatar {
-      width: 10mm;
-      height: 10mm;
+      width: 9mm;
+      height: 9mm;
       border-radius: 50%;
       background: var(--primary);
       color: #fff;
+      font-size: 9pt;
+      font-weight: 700;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 9pt;
-      font-weight: 700;
     }
 
     .child-name {
@@ -158,105 +160,74 @@
       border-collapse: collapse;
       background: #fff;
       border-radius: 4mm;
-      overflow: hidden;
       font-size: 9pt;
     }
 
-    th {
-      background: #f8fafc;
+    th, td {
       padding: 3mm;
-      font-weight: 700;
-      color: var(--muted);
-      border-bottom: 0.5pt solid var(--border);
-    }
-
-    td {
-      padding: 3.5mm;
       text-align: center;
       font-weight: 700;
       border-bottom: 0.5pt solid var(--border);
     }
 
-    /* Progress */
-    .progress {
-      margin-top: 4mm;
-      font-size: 8.5pt;
+    th {
+      background: #f8fafc;
       color: var(--muted);
     }
 
-    .bar {
-      height: 2.5mm;
-      background: #e5e7eb;
-      border-radius: 100mm;
-      overflow: hidden;
-      margin-top: 1.5mm;
-    }
-
-    .bar div {
-      height: 100%;
-      width: <%= successRate %>%;
-      background: #22c55e;
-    }
-
-    /* Extra analytics */
+    /* Metrics */
     .section-title {
-      margin: 0 0 3mm;
-      font-size: 11pt;
+      font-size: 10.5pt;
       font-weight: 700;
-      color: var(--text);
+      margin: 4mm 0 2.5mm;
     }
 
     .metrics {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 3mm;
-      margin-bottom: 6mm;
+      gap: 2.5mm;
+      margin-bottom: 4mm;
     }
 
     .metric {
-      background: #ffffff;
+      background: #fff;
       border: 0.5pt solid var(--border);
       border-radius: 4mm;
-      padding: 3.5mm;
+      padding: 3mm;
     }
 
     .metric .k {
       font-size: 8.5pt;
       color: var(--muted);
       font-weight: 700;
-      margin-bottom: 1mm;
     }
 
     .metric .v {
-      font-size: 12pt;
+      font-size: 11pt;
       font-weight: 800;
-      color: var(--text);
-      line-height: 1.2;
     }
 
     .metric .s {
       font-size: 8.5pt;
       color: var(--muted);
-      font-weight: 700;
-      margin-top: 1mm;
     }
 
     .two-col {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 5mm;
-      margin-bottom: 6mm;
+      gap: 3.5mm;
+      margin-bottom: 4mm;
     }
 
     .box {
-      background: #ffffff;
+      background: #fff;
       border: 0.5pt solid var(--border);
       border-radius: 4mm;
-      padding: 4mm;
+      padding: 3.5mm;
     }
 
     .box h4 {
-      margin: 0 0 3mm;
+      margin: 0 0 2mm;
       font-size: 10pt;
       font-weight: 800;
       color: var(--primary);
@@ -270,81 +241,64 @@
       font-weight: 700;
     }
 
-    .kv .key {
-      color: var(--muted);
-    }
-
-    .kv .val {
-      color: var(--text);
-      text-align: left;
-      direction: ltr;
-    }
-
-    .page-break {
+    /* ===== PAGE 2 ===== */
+    .sessions-page {
       break-before: page;
-      page-break-before: always;
     }
 
-    /* Sessions cards (second page) */
     .sessions-list {
       display: grid;
-      grid-template-columns: 1fr;
-      gap: 4mm;
+      gap: 3mm;
     }
 
     .session-card {
-      background: #ffffff;
+      background: #fff;
       border: 0.5pt solid var(--border);
       border-radius: 4mm;
-      padding: 4mm;
-      overflow: hidden;
+      padding: 3mm;
     }
 
     .session-head {
       display: flex;
       justify-content: space-between;
-      align-items: baseline;
-      margin-bottom: 3mm;
+      margin-bottom: 2mm;
     }
 
     .session-title {
       font-size: 10pt;
-      font-weight: 900;
+      font-weight: 800;
       color: var(--primary);
     }
 
     .session-date {
       font-size: 9pt;
-      font-weight: 700;
       color: var(--muted);
+      font-weight: 700;
     }
 
     .session-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 3mm;
+      gap: 2mm;
     }
 
     .session-metric {
       background: #f8fafc;
       border: 0.5pt solid var(--border);
       border-radius: 3mm;
-      padding: 3mm;
+      padding: 2.5mm;
       text-align: center;
     }
 
     .session-metric .k {
       font-size: 8.5pt;
-      font-weight: 700;
       color: var(--muted);
-      margin-bottom: 1mm;
+      font-weight: 700;
     }
 
     .session-metric .v {
       font-size: 11pt;
       font-weight: 900;
-      color: var(--text);
-      line-height: 1.2;
     }
 
     @page {
@@ -355,18 +309,19 @@
 </head>
 
 <body>
+
+<!-- PAGE 1 -->
 <div class="page">
 
   <div class="header">
-    <div class="app-desc">نراقب بحب، ونحمي بذكاء </div>
+    <div class="app-desc">نراقب بحب، ونحمي بذكاء</div>
     <div class="logo">BMO</div>
   </div>
-
   <div class="line"></div>
 
   <div class="report">
     <h2>تقرير تحليلي</h2>
-    <small>الطفل: <%= childName %> • الجنس: <%= (typeof childGenderText !== 'undefined' ? childGenderText : '-') %> • تاريخ التقرير: <%= reportDate %></small>
+    <small>الطفل: <%= childName %> • تاريخ التقرير: <%= reportDate %></small>
   </div>
 
   <div class="card">
@@ -382,128 +337,91 @@
     </div>
 
     <table>
-      <thead>
-        <tr>
-          <th>الجلسات</th>
-          <th>وقت اللعب</th>
-          <th>نسبة النجاح</th>
-          <th>متوسط الدرجة</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><%= totalSessions %></td>
-          <td><%= playTimeText %></td>
-          <td><%= successRate %>%</td>
-          <td><%= averageScore %></td>
-        </tr>
-      </tbody>
+      <tr>
+        <th>الجلسات</th>
+        <th>وقت اللعب</th>
+        <th>نسبة النجاح</th>
+        <th>متوسط الدرجة</th>
+      </tr>
+      <tr>
+        <td><%= totalSessions %></td>
+        <td><%= playTimeText %></td>
+        <td><%= successRate %>%</td>
+        <td><%= averageScore %></td>
+      </tr>
     </table>
 
-    <div style="margin-top:6mm;">
-      <div class="section-title">تحليلات إضافية</div>
+    <div class="section-title">تحليلات إضافية</div>
 
-      <div class="metrics">
-        <div class="metric">
-          <div class="k">المحاولات (الإجمالي)</div>
-          <div class="v"><%= typeof totalAttempts !== 'undefined' ? totalAttempts : 0 %></div>
-          <div class="s">ناجحة: <%= typeof successfulAttempts !== 'undefined' ? successfulAttempts : 0 %> • فاشلة: <%= typeof failedAttempts !== 'undefined' ? failedAttempts : 0 %></div>
-        </div>
-
-        <div class="metric">
-          <div class="k">متوسط وقت الجلسة</div>
-          <div class="v"><%= typeof avgSessionMinutes !== 'undefined' ? avgSessionMinutes : 0 %></div>
-          <div class="s">دقيقة</div>
-        </div>
-
-        <div class="metric">
-          <div class="k">آخر 5 جلسات (متوسط)</div>
-          <div class="v"><%= typeof recentSuccessRate !== 'undefined' ? recentSuccessRate : 0 %>%</div>
-          <div class="s">متوسط الدرجة: <%= typeof recentAvgScore !== 'undefined' ? recentAvgScore : 0 %></div>
-        </div>
-
-        <div class="metric">
-          <div class="k">آخر نشاط</div>
-          <div class="v"><%= lastSessionDate || '-' %></div>
-          <div class="s">أول نشاط: <%= firstSessionDate || '-' %></div>
-        </div>
+    <div class="metrics">
+      <div class="metric">
+        <div class="k">المحاولات</div>
+        <div class="v"><%= totalAttempts || 0 %></div>
+        <div class="s">ناجحة: <%= successfulAttempts || 0 %></div>
       </div>
+      <div class="metric">
+        <div class="k">متوسط وقت الجلسة</div>
+        <div class="v"><%= avgSessionMinutes || 0 %></div>
+        <div class="s">دقيقة</div>
+      </div>
+    </div>
 
-      <div class="two-col">
-        <div class="box">
-          <h4>أفضل جلسة</h4>
-          <% if (bestSession) { %>
-            <div class="kv">
-              <div class="key">التاريخ</div><div class="val"><%= bestSession.date %></div>
-              <div class="key">نسبة النجاح</div><div class="val"><%= bestSession.successRate %>%</div>
-              <div class="key">متوسط الدرجة</div><div class="val"><%= bestSession.averageScore %></div>
-            </div>
-          <% } else { %>
-            <div style="font-size:9pt; color: var(--muted); font-weight:700;">لا توجد بيانات جلسات.</div>
-          <% } %>
+    <div class="two-col">
+      <div class="box">
+        <h4>أفضل جلسة</h4>
+        <% if (bestSession) { %>
+        <div class="kv">
+          <div>التاريخ</div><div><%= bestSession.date %></div>
+          <div>نسبة النجاح</div><div><%= bestSession.successRate %>%</div>
         </div>
-
-        <div class="box">
-          <h4>أقل جلسة</h4>
-          <% if (worstSession) { %>
-            <div class="kv">
-              <div class="key">التاريخ</div><div class="val"><%= worstSession.date %></div>
-              <div class="key">نسبة النجاح</div><div class="val"><%= worstSession.successRate %>%</div>
-              <div class="key">متوسط الدرجة</div><div class="val"><%= worstSession.averageScore %></div>
-            </div>
-          <% } else { %>
-            <div style="font-size:9pt; color: var(--muted); font-weight:700;">لا توجد بيانات جلسات.</div>
-          <% } %>
-        </div>
+        <% } else { %>
+        <div style="font-size:9pt;color:var(--muted)">لا توجد بيانات</div>
+        <% } %>
       </div>
     </div>
   </div>
 </div>
 
+<!-- PAGE 2 -->
 <% if (Array.isArray(lastSessions) && lastSessions.length) { %>
-  <div class="page page-break sessions-page">
-    <div class="header">
-      <div class="app-desc">نراقب بحب، ونحمي بذكاء </div>
-      <div class="logo">BMO</div>
-    </div>
+<div class="page sessions-page">
 
-    <div class="line"></div>
-
-    <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4mm;">
-      <div class="section-title" style="margin:0;">آخر الجلسات</div>
-      <div style="font-size:9pt; color: var(--muted); font-weight:700;">الطفل: <%= childName %> • <%= reportDate %></div>
-    </div>
-
-    <div class="sessions-list">
-      <% lastSessions.forEach(function(s, idx) { %>
-        <div class="session-card">
-          <div class="session-head">
-            <div class="session-title"><%= idx === 0 ? 'آخر جلسة' : 'جلسة سابقة' %></div>
-            <div class="session-date"><%= s.date %></div>
-          </div>
-
-          <div class="session-grid">
-            <div class="session-metric">
-              <div class="k">عدد المحاولات</div>
-              <div class="v"><%= s.attempts %></div>
-            </div>
-            <div class="session-metric">
-              <div class="k">نسبة النجاح</div>
-              <div class="v"><%= s.successRate %>%</div>
-            </div>
-            <div class="session-metric">
-              <div class="k">متوسط الدرجة</div>
-              <div class="v"><%= s.averageScore %></div>
-            </div>
-          </div>
-
-          <div style="margin-top:3mm; font-size:9pt; font-weight:700; color: var(--muted);">المدة: <span style="color:var(--text);"><%= s.duration %></span> دقيقة</div>
-        </div>
-      <% }); %>
-    </div>
-
-    <div style="margin-top:8mm; text-align:center; font-size:9pt; font-weight:700; color: var(--muted);">انتهاء الملف</div>
+  <div class="header">
+    <div class="app-desc">نراقب بحب، ونحمي بذكاء</div>
+    <div class="logo">BMO</div>
   </div>
+  <div class="line"></div>
+
+  <div class="section-title">آخر الجلسات</div>
+
+  <div class="sessions-list">
+    <% lastSessions.forEach(function(s) { %>
+    <div class="session-card">
+      <div class="session-head">
+        <div class="session-title">جلسة</div>
+        <div class="session-date"><%= s.date %></div>
+      </div>
+
+      <div class="session-grid">
+        <div class="session-metric">
+          <div class="k">المحاولات</div>
+          <div class="v"><%= s.attempts %></div>
+        </div>
+        <div class="session-metric">
+          <div class="k">النجاح</div>
+          <div class="v"><%= s.successRate %>%</div>
+        </div>
+        <div class="session-metric">
+          <div class="k">المتوسط</div>
+          <div class="v"><%= s.averageScore %></div>
+        </div>
+      </div>
+    </div>
+    <% }); %>
+  </div>
+
+</div>
 <% } %>
+
 </body>
 </html>
