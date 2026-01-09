@@ -5,6 +5,7 @@ const path = require('path');
 const { ensureSpecialist } = require('../middleware/auth');
 const apiClient = require('../utils/apiClient');
 const FormData = require('form-data');
+const PDFDocument = require('pdfkit');
 
 // Apply specialist middleware to all routes
 router.use(ensureSpecialist);
@@ -750,6 +751,70 @@ router.get('/child/:id/analytics/data', async (req, res) => {
             success: false,
             message: error.message
         });
+    }
+});
+
+// Child Analytics PDF Export (for the header button)
+router.get('/child/:id/analytics/pdf', async (req, res) => {
+    try {
+        const childId = req.params.id;
+
+        // Build sessions list (same strategy as analytics/data)
+        let sessions = [];
+        try {
+            const response = await apiClient.authGet(req, `/progress/sessions/${childId}`);
+            sessions = (response.data && response.data.sessions) ? response.data.sessions : [];
+        } catch (e) {
+            const progressResponse = await apiClient.authGet(req, `/progress/child/${childId}`);
+            const progress = progressResponse?.data?.progress;
+            sessions = _normalizeSessionsForCharts(progress?.sessions);
+        }
+
+        const totalSessions = sessions.length;
+        const totalAttempts = sessions.reduce((sum, s) => sum + (Number(s.totalAttempts) || 0), 0);
+        const successfulAttempts = sessions.reduce((sum, s) => sum + (Number(s.successfulAttempts) || 0), 0);
+
+        const successRate = totalAttempts > 0
+            ? Math.round((successfulAttempts / totalAttempts) * 100)
+            : 0;
+
+        const averageScore = totalSessions > 0
+            ? Math.round(sessions.reduce((sum, s) => sum + (Number(s.averageScore) || 0), 0) / totalSessions)
+            : 0;
+
+        // Child name for the PDF title (optional)
+        let childName = '';
+        try {
+            const childResp = await apiClient.authGet(req, `/children/${childId}`);
+            childName = childResp?.data?.child?.name || '';
+        } catch (e) {
+            // optional
+        }
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=child-analytics-${childId}.pdf`);
+
+        const doc = new PDFDocument({ margin: 50 });
+        doc.pipe(res);
+
+        doc.fontSize(18).text('Child Analytics', { align: 'left' });
+        if (childName) {
+            doc.moveDown(0.5);
+            doc.fontSize(12).text(`Child: ${childName}`, { align: 'left' });
+        }
+        doc.moveDown(1);
+
+        doc.fontSize(12);
+        doc.text(`Total Sessions: ${totalSessions}`);
+        doc.text(`Average Score: ${averageScore}%`);
+        doc.text(`Success Rate: ${successRate}%`);
+
+        doc.end();
+    } catch (error) {
+        const status = error?.response?.status;
+        const url = error?.config?.url;
+        console.error('Analytics PDF Error:', status ? `${status}` : error.message, url ? `url=${url}` : '');
+        res.status(500).send('Failed to generate PDF');
     }
 });
 

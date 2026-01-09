@@ -4468,8 +4468,30 @@ a {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 2.5rem;
   position: relative;
   z-index: 2;
+}
+
+.header-pdf-pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 92px;
+  border-radius: 999px;
+  text-decoration: none;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  line-height: 1.1;
+  background: rgba(255, 255, 255, 0.85);
+  color: #1e293b;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+}
+
+.header-pdf-pill:hover {
+  background: rgba(255, 255, 255, 0.95);
 }
 
 /* Right Section (Info) in RTL */
@@ -4477,11 +4499,7 @@ a {
   display: flex;
   align-items: center;
   gap: 2rem;
-  text-align: right;
-  /* RTL alignment */
-  flex-direction: row-reverse;
-  /* To put avatar on far right visual in LTR, or correct in RTL? 
-                                  Let's rely on flex-row and order. */
+  text-align: left;
 }
 
 /* In RTL: Avatar (First in HTML?) NO. 
@@ -4537,8 +4555,8 @@ a {
 }
 
 .avatar-circle-blue {
-  width: 90px;
-  height: 90px;
+  width: 120px;
+  height: 120px;
   background: rgba(255, 255, 255, 0.2);
   border-radius: 50%;
   display: flex;
@@ -4554,6 +4572,29 @@ a {
   font-weight: 700;
   margin-bottom: 0.5rem;
   line-height: 1.1;
+}
+
+.child-name {
+  margin: 0;
+  display: block;
+}
+
+.header-parent-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.header-parent-name {
+  font-size: 1rem;
+  font-weight: 600;
+  opacity: 0.95;
+}
+
+.header-parent-email {
+  font-size: 0.95rem;
+  font-weight: 600;
+  opacity: 0.9;
 }
 
 .parent-name,

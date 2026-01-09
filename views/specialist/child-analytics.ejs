@@ -4,6 +4,11 @@
         <!-- Blue Profile Header -->
         <div class="blue-profile-header">
             <div class="profile-content-wrapper">
+                <!-- PDF Download (Far right in RTL) -->
+                <a class="header-pdf-pill" href="/specialist/child/<%= child._id %>/analytics/pdf" aria-label="تنزيل تقرير تقدم الطفل PDF">
+                    هنا<br>تنزيل<br>تقدم<br>الطفل<br>كملف<br>pdf
+                </a>
+
                 <!-- Stats Section (Left in RTL) -->
                 <div class="header-stats-blue">
                     <div class="stat-item-blue">
@@ -21,95 +26,30 @@
                 </div>
 
                 <!-- Profile Info (Right in RTL) -->
-                <!-- Profile Info (Right in RTL) -->
                 <div class="header-info-blue">
                     <div class="info-details">
                         <h1 class="child-name">
                             <%= child.name %>
                         </h1>
 
-                        <div class="child-meta">
-                            <span class="email-pill" title="ولي الأمر">
-                                <i class="fa-solid fa-envelope"></i>
-                                <%= (child.parent && child.parent.email) ? child.parent.email : '-' %>
-                            </span>
-                        </div>
-
-                        <div class="parent-info-row">
-                            <span class="parent-name">
+                        <div class="header-parent-block">
+                            <div class="header-parent-name">
                                 <%= (child.parent && child.parent.name) ? child.parent.name : '-' %>
-                            </span>
-                            <% if (child.parent && child.parent.profilePhoto) { %>
-                                <img src="<%= uploadUrl(child.parent.profilePhoto) %>"
-                                    alt="Parent" class="mini-avatar-circle"
-                                    onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
-                                <i class="fa-solid fa-user fallback-icon" style="display:none;"></i>
-                                <% } else { %>
-                                    <i class="fa-solid fa-user"></i>
-                                    <% } %>
+                            </div>
+                            <div class="header-parent-email">
+                                <%= (child.parent && child.parent.email) ? child.parent.email : '' %>
+                            </div>
                         </div>
-
-                        <p class="parent-email">
-                            <i class="fa-solid fa-envelope"></i>
-                            <%= (child.parent && child.parent.email) ? child.parent.email : '' %>
-                        </p>
                     </div>
 
                     <!-- Child Avatar -->
                     <div class="avatar-circle-blue">
-                        <%- include('../partials/child-avatar', { child: child, sizePx: 92 }) %>
+                        <%- include('../partials/child-avatar', { child: child, sizePx: 120 }) %>
                     </div>
                 </div>
             </div>
         </div>
 
-        <style>
-            .child-name {
-                margin: 0;
-                display: block;
-                line-height: 1.2;
-            }
-
-            .child-meta {
-                margin-top: 0.5rem;
-                display: flex;
-                justify-content: flex-end;
-                gap: 0.5rem;
-                flex-wrap: wrap;
-            }
-
-            .email-pill {
-                display: inline-flex;
-                align-items: center;
-                gap: 0.4rem;
-                font-size: 0.9rem;
-                font-weight: 600;
-                background: rgba(255,255,255,0.15);
-                color: rgba(255,255,255,0.95);
-                border: 1px solid rgba(255,255,255,0.25);
-                border-radius: 999px;
-                padding: 0.25rem 0.6rem;
-            }
-            .mini-avatar-circle {
-                width: 24px;
-                height: 24px;
-                border-radius: 50%;
-                object-fit: cover;
-                border: 2px solid rgba(255, 255, 255, 0.8);
-                margin-left: 0.5rem;
-            }
-
-            .parent-info-row {
-                display: flex;
-                align-items: center;
-                justify-content: flex-end;
-                /* RTL align */
-                gap: 0.5rem;
-                margin-bottom: 0.25rem;
-                color: rgba(255, 255, 255, 0.9);
-                font-size: 1rem;
-            }
-        </style>
 
         <!-- Charts Grid -->
         <div class="charts-grid-blue-layout">
