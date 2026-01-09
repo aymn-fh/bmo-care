@@ -280,25 +280,71 @@
       direction: ltr;
     }
 
-    .sessions-table td {
-      font-weight: 700;
-    }
-
     .page-break {
       break-before: page;
       page-break-before: always;
     }
 
-    .sessions-page .sessions-table {
+    /* Sessions cards (second page) */
+    .sessions-list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 4mm;
+    }
+
+    .session-card {
+      background: #ffffff;
+      border: 0.5pt solid var(--border);
+      border-radius: 4mm;
+      padding: 4mm;
+      overflow: hidden;
+    }
+
+    .session-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 3mm;
+    }
+
+    .session-title {
+      font-size: 10pt;
+      font-weight: 900;
+      color: var(--primary);
+    }
+
+    .session-date {
+      font-size: 9pt;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .session-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3mm;
+    }
+
+    .session-metric {
+      background: #f8fafc;
+      border: 0.5pt solid var(--border);
+      border-radius: 3mm;
+      padding: 3mm;
+      text-align: center;
+    }
+
+    .session-metric .k {
       font-size: 8.5pt;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 1mm;
     }
 
-    .sessions-page th {
-      padding: 2.5mm;
-    }
-
-    .sessions-page td {
-      padding: 2.8mm;
+    .session-metric .v {
+      font-size: 11pt;
+      font-weight: 900;
+      color: var(--text);
+      line-height: 1.2;
     }
 
     @page {
@@ -423,8 +469,8 @@
 <% if (Array.isArray(lastSessions) && lastSessions.length) { %>
   <div class="page page-break sessions-page">
     <div class="header">
-      <div class="app-desc">تطبيق علاج النطق للأطفال</div>
-      <div class="logo">نطق</div>
+      <div class="app-desc">نراقب بحب، ونحمي بذكاء </div>
+      <div class="logo">BMO</div>
     </div>
 
     <div class="line"></div>
@@ -433,30 +479,36 @@
       <div class="section-title" style="margin:0;">آخر الجلسات</div>
       <div style="font-size:9pt; color: var(--muted); font-weight:700;">الطفل: <%= childName %> • <%= reportDate %></div>
     </div>
-    <table class="sessions-table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>التاريخ</th>
-          <th>المحاولات</th>
-          <th>النجاح</th>
-          <th>متوسط الدرجة</th>
-          <th>المدة (د)</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% lastSessions.forEach(function(s) { %>
-          <tr>
-            <td><%= s.index %></td>
-            <td><%= s.date %></td>
-            <td><%= s.attempts %></td>
-            <td><%= s.successRate %>%</td>
-            <td><%= s.averageScore %></td>
-            <td><%= s.duration %></td>
-          </tr>
-        <% }); %>
-      </tbody>
-    </table>
+
+    <div class="sessions-list">
+      <% lastSessions.forEach(function(s, idx) { %>
+        <div class="session-card">
+          <div class="session-head">
+            <div class="session-title"><%= idx === 0 ? 'آخر جلسة' : 'جلسة سابقة' %></div>
+            <div class="session-date"><%= s.date %></div>
+          </div>
+
+          <div class="session-grid">
+            <div class="session-metric">
+              <div class="k">عدد المحاولات</div>
+              <div class="v"><%= s.attempts %></div>
+            </div>
+            <div class="session-metric">
+              <div class="k">نسبة النجاح</div>
+              <div class="v"><%= s.successRate %>%</div>
+            </div>
+            <div class="session-metric">
+              <div class="k">متوسط الدرجة</div>
+              <div class="v"><%= s.averageScore %></div>
+            </div>
+          </div>
+
+          <div style="margin-top:3mm; font-size:9pt; font-weight:700; color: var(--muted);">المدة: <span style="color:var(--text);"><%= s.duration %></span> دقيقة</div>
+        </div>
+      <% }); %>
+    </div>
+
+    <div style="margin-top:8mm; text-align:center; font-size:9pt; font-weight:700; color: var(--muted);">انتهاء الملف</div>
   </div>
 <% } %>
 </body>
