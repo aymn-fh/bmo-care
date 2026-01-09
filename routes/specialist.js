@@ -925,6 +925,8 @@ router.get('/child/:id/analytics/pdf', async (req, res) => {
                         date: formatDate(bestSession.sessionDate) || '-',
                         averageScore: Math.round(Number(bestSession.averageScore) || 0),
                         successRate: Math.round(Number(bestSession.successRate) || 0),
+                        attempts: Number(bestSession.totalAttempts) || 0,
+                        duration: Math.max(0, Math.round(Number(bestSession.duration) || 0)),
                     }
                     : null,
                 worstSession: worstSession
@@ -932,6 +934,8 @@ router.get('/child/:id/analytics/pdf', async (req, res) => {
                         date: formatDate(worstSession.sessionDate) || '-',
                         averageScore: Math.round(Number(worstSession.averageScore) || 0),
                         successRate: Math.round(Number(worstSession.successRate) || 0),
+                        attempts: Number(worstSession.totalAttempts) || 0,
+                        duration: Math.max(0, Math.round(Number(worstSession.duration) || 0)),
                     }
                     : null,
                 lastSessions,
