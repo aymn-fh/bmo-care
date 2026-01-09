@@ -391,37 +391,25 @@
     <div class="logo">BMO</div>
   </div>
   <div class="line"></div>
+<div class="section-title">آخر الجلسات</div>
 
-  <div class="section-title">آخر الجلسات</div>
-
-  <div class="sessions-list">
+<table>
+  <thead>
+    <tr>
+      <th>التاريخ</th>
+      <th>عدد المحاولات</th>
+      <th>نسبة النجاح</th>
+      <th>المتوسط</th>
+    </tr>
+  </thead>
+  <tbody>
     <% lastSessions.forEach(function(s) { %>
-    <div class="session-card">
-      <div class="session-head">
-        <div class="session-title">جلسة</div>
-        <div class="session-date"><%= s.date %></div>
-      </div>
-
-      <div class="session-grid">
-        <div class="session-metric">
-          <div class="k">المحاولات</div>
-          <div class="v"><%= s.attempts %></div>
-        </div>
-        <div class="session-metric">
-          <div class="k">النجاح</div>
-          <div class="v"><%= s.successRate %>%</div>
-        </div>
-        <div class="session-metric">
-          <div class="k">المتوسط</div>
-          <div class="v"><%= s.averageScore %></div>
-        </div>
-      </div>
-    </div>
+      <tr>
+        <td><%= s.date %></td>
+        <td><%= s.attempts %></td>
+        <td><%= s.successRate %>%</td>
+        <td><%= s.averageScore %></td>
+      </tr>
     <% }); %>
-  </div>
-
-</div>
-<% } %>
-
-</body>
-</html>
+  </tbody>
+</table>
