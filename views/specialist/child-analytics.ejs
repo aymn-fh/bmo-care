@@ -51,6 +51,156 @@
         </div>
 
 
+        <!-- Plan Settings + Numbered Sessions (Session 1/2/3...) -->
+        <div class="secondary-grid-blue" style="margin-top: 1rem;">
+            <div class="chart-box-white">
+                <div class="chart-header-simple">
+                    <h3><i class="fa-solid fa-calendar-check"></i> إعدادات اللعب</h3>
+                    <span>مدة + جدول لعب (متى يلعب)</span>
+                </div>
+
+                <form method="POST" action="/specialist/child/<%= child._id %>/plan-settings" style="padding: 0 1rem 1rem;">
+                    <div class="form-row" style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                        <div class="form-group">
+                            <label>الحد اليومي (دقيقة)</label>
+                            <input class="form-control" type="number" name="dailyPlayDuration" min="0" value="<%= (child.dailyPlayDuration != null ? child.dailyPlayDuration : '') %>">
+                        </div>
+                        <div class="form-group">
+                            <label>مدة الجلسة (دقيقة)</label>
+                            <input class="form-control" type="number" name="playDuration" min="1" value="<%= (child.sessionStructure && child.sessionStructure.playDuration != null) ? child.sessionStructure.playDuration : '' %>">
+                        </div>
+                        <div class="form-group">
+                            <label>مدة الاستراحة (دقيقة)</label>
+                            <input class="form-control" type="number" name="breakDuration" min="0" value="<%= (child.sessionStructure && child.sessionStructure.breakDuration != null) ? child.sessionStructure.breakDuration : '' %>">
+                        </div>
+                        <div class="form-group">
+                            <label>أقصى عدد محاولات للجلسة</label>
+                            <input class="form-control" type="number" name="maxAttempts" min="1" value="<%= (child.sessionStructure && child.sessionStructure.maxAttempts != null) ? child.sessionStructure.maxAttempts : '' %>">
+                        </div>
+                    </div>
+
+                    <hr style="margin: 1rem 0; opacity: 0.2;"/>
+
+                    <div class="form-group" style="display:flex; align-items:center; gap:0.5rem;">
+                        <input type="checkbox" name="scheduleEnabled" id="scheduleEnabled" <%= (child.playSchedule && child.playSchedule.enabled) ? 'checked' : '' %> />
+                        <label for="scheduleEnabled" style="margin:0;">تفعيل جدول اللعب</label>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 0.75rem;">
+                        <label>أيام السماح</label>
+                        <% const days = [
+                            { v: 0, t: 'الأحد' },
+                            { v: 1, t: 'الإثنين' },
+                            { v: 2, t: 'الثلاثاء' },
+                            { v: 3, t: 'الأربعاء' },
+                            { v: 4, t: 'الخميس' },
+                            { v: 5, t: 'الجمعة' },
+                            { v: 6, t: 'السبت' },
+                        ];
+                        const allowedRaw = (child.playSchedule && Array.isArray(child.playSchedule.allowedDays)) ? child.playSchedule.allowedDays : [];
+                        const allowed = allowedRaw.map(x => Number(x)).filter(x => Number.isFinite(x));
+                        %>
+                        <div style="display:flex; flex-wrap:wrap; gap:0.75rem;">
+                            <% days.forEach(d => { %>
+                                <label style="display:flex; align-items:center; gap:0.35rem;">
+                                    <input type="checkbox" name="allowedDays" value="<%= d.v %>" <%= allowed.includes(d.v) ? 'checked' : '' %> />
+                                    <span><%= d.t %></span>
+                                </label>
+                            <% }); %>
+                        </div>
+                        <div style="margin-top:0.5rem; color:#64748b; font-size:0.85rem;">إذا لم يتم اختيار أيام، سيتم السماح بكل الأيام.</div>
+                    </div>
+
+                    <% const w0 = (child.playSchedule && Array.isArray(child.playSchedule.windows) && child.playSchedule.windows.length)
+                        ? child.playSchedule.windows[0]
+                        : null;
+                    %>
+                    <div class="form-row" style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.75rem;">
+                        <div class="form-group">
+                            <label>من</label>
+                            <input class="form-control" type="time" name="windowStart" value="<%= (w0 && w0.start) ? w0.start : '' %>">
+                        </div>
+                        <div class="form-group">
+                            <label>إلى</label>
+                            <input class="form-control" type="time" name="windowEnd" value="<%= (w0 && w0.end) ? w0.end : '' %>">
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" type="submit" style="margin-top: 0.75rem; width: 100%;">حفظ</button>
+                </form>
+            </div>
+
+            <div class="chart-box-white">
+                <div class="chart-header-simple">
+                    <h3><i class="fa-solid fa-layer-group"></i> جلسات الخطة (Session)</h3>
+                    <span>سهولة البحث والمقارنة</span>
+                </div>
+
+                <div style="padding: 0 1rem 1rem;">
+                    <div style="margin-bottom: 0.75rem; color:#64748b; font-size:0.9rem;">
+                        الجلسة النشطة هي التي تُرسل رقمها مع كل تقدم من اللعبة.
+                    </div>
+
+                    <div style="max-height: 160px; overflow:auto; border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 10px;">
+                        <table class="clean-blue-table" style="margin:0;">
+                            <thead>
+                                <tr>
+                                    <th>Session</th>
+                                    <th>الاسم</th>
+                                    <th>نشطة</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (!plans || plans.length === 0) { %>
+                                    <tr><td colspan="3" style="text-align:center; color:#64748b;">لا توجد جلسات خطة بعد</td></tr>
+                                <% } else { %>
+                                    <% plans.forEach(p => { %>
+                                        <tr>
+                                            <td><%= p.sessionIndex != null ? p.sessionIndex : '-' %></td>
+                                            <td><%= p.sessionName || '-' %></td>
+                                            <td>
+                                                <% if (p.active) { %>
+                                                    <span style="color:#16a34a; font-weight:600;">نعم</span>
+                                                <% } else { %>
+                                                    <span style="color:#64748b;">لا</span>
+                                                <% } %>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <hr style="margin: 1rem 0; opacity: 0.2;"/>
+
+                    <form method="POST" action="/specialist/child/<%= child._id %>/create-plan-session">
+                        <div class="form-group">
+                            <label>اسم الجلسة (اختياري)</label>
+                            <input class="form-control" type="text" name="sessionName" placeholder="Session 1">
+                        </div>
+                        <div class="form-group" style="margin-top:0.5rem;">
+                            <label>مدة الجلسة (دقيقة) (اختياري)</label>
+                            <input class="form-control" type="number" name="targetDuration" min="1" placeholder="15">
+                        </div>
+                        <div class="form-row" style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.75rem;">
+                            <div class="form-group">
+                                <label>حروف (كل سطر حرف أو مفصول بفاصلة)</label>
+                                <textarea class="form-control" name="lettersText" rows="6" placeholder="ب\nت\nث"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>كلمات (كل سطر كلمة أو مفصول بفاصلة)</label>
+                                <textarea class="form-control" name="wordsText" rows="6" placeholder="بابا\nماما"></textarea>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary" type="submit" style="margin-top: 0.75rem; width: 100%;">إنشاء Session جديدة (وتفعيلها)</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+
         <!-- Charts Grid -->
         <div class="charts-grid-blue-layout">
             <!-- Progress Over Time -->

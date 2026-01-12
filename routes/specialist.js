@@ -723,12 +723,24 @@ router.get('/child/:id/analytics', async (req, res) => {
             console.warn('Failed to compute finalWordAnalysis:', e.message);
         }
 
+        // Fetch plan sessions (Exercise plans) so the portal can show Session 1/2/3...
+        let plans = [];
+        try {
+            const plansResp = await apiClient.authGet(req, `/exercises/child/${childId}?includeInactive=1`);
+            plans = (plansResp?.data?.success) ? (plansResp.data.exercises || []) : [];
+            plans = plans.filter(p => (p?.kind || 'plan') === 'plan');
+            plans.sort((a, b) => (b?.sessionIndex || 0) - (a?.sessionIndex || 0));
+        } catch (e) {
+            console.warn('Plans fetch failed (ignored):', e.message);
+        }
+
         res.render('specialist/child-analytics', {
             title: `تحليلات ${child.name}`,
             child,
             progress,
             attempts,
-            finalWordAnalysis
+            finalWordAnalysis,
+            plans
         });
     } catch (error) {
         const status = error?.response?.status;
@@ -736,6 +748,85 @@ router.get('/child/:id/analytics', async (req, res) => {
         console.error('Analytics View Error:', status ? `${status}` : error.message, url ? `url=${url}` : '');
         req.flash('error_msg', res.locals.__('errorOccurred'));
         res.redirect('/specialist/children');
+    }
+});
+
+// Update child play settings (duration + schedule)
+router.post('/child/:id/plan-settings', async (req, res) => {
+    try {
+        const childId = req.params.id;
+
+        const dailyPlayDuration = req.body.dailyPlayDuration ? Number(req.body.dailyPlayDuration) : undefined;
+        const playDuration = req.body.playDuration ? Number(req.body.playDuration) : undefined;
+        const breakDuration = req.body.breakDuration ? Number(req.body.breakDuration) : undefined;
+        const maxAttempts = req.body.maxAttempts ? Number(req.body.maxAttempts) : undefined;
+
+        const scheduleEnabled = req.body.scheduleEnabled === 'on' || req.body.scheduleEnabled === 'true';
+
+        const allowedDaysRaw = req.body.allowedDays;
+        const allowedDays = ([]).concat(allowedDaysRaw || [])
+            .map(x => Number(x))
+            .filter(x => Number.isFinite(x) && x >= 0 && x <= 6);
+
+        const windowStart = String(req.body.windowStart || '').trim();
+        const windowEnd = String(req.body.windowEnd || '').trim();
+        const windows = (windowStart && windowEnd) ? [{ start: windowStart, end: windowEnd }] : [];
+
+        const payload = {
+            ...(typeof dailyPlayDuration === 'number' ? { dailyPlayDuration } : {}),
+            sessionStructure: {
+                ...(typeof playDuration === 'number' ? { playDuration } : {}),
+                ...(typeof breakDuration === 'number' ? { breakDuration } : {}),
+                ...(typeof maxAttempts === 'number' ? { maxAttempts } : {}),
+            },
+            playSchedule: {
+                enabled: scheduleEnabled,
+                enforce: true,
+                allowedDays,
+                windows,
+            }
+        };
+
+        await apiClient.authPost(req, `/specialists/set-duration/${childId}`, payload);
+        req.flash('success_msg', 'تم حفظ إعدادات اللعب.');
+        res.redirect(`/specialist/child/${childId}/analytics`);
+    } catch (error) {
+        console.error('Plan settings update failed:', error?.message);
+        req.flash('error_msg', res.locals.__('errorOccurred'));
+        res.redirect(`/specialist/child/${req.params.id}/analytics`);
+    }
+});
+
+// Create a new numbered plan session (Session 1/2/3...) with letters/words
+router.post('/child/:id/create-plan-session', async (req, res) => {
+    try {
+        const childId = req.params.id;
+
+        const targetDuration = req.body.targetDuration ? Number(req.body.targetDuration) : undefined;
+        const sessionName = String(req.body.sessionName || '').trim();
+
+        const parseLines = (s) => String(s || '')
+            .split(/\r?\n|,/g)
+            .map(x => x.trim())
+            .filter(Boolean);
+
+        const letters = parseLines(req.body.lettersText).map(letter => ({ letter }));
+        const words = parseLines(req.body.wordsText).map(word => ({ word }));
+
+        await apiClient.authPost(req, '/exercises', {
+            childId,
+            letters,
+            words,
+            ...(typeof targetDuration === 'number' ? { targetDuration } : {}),
+            ...(sessionName ? { sessionName } : {}),
+        });
+
+        req.flash('success_msg', 'تم إنشاء جلسة جديدة للخطة.');
+        res.redirect(`/specialist/child/${childId}/analytics`);
+    } catch (error) {
+        console.error('Create plan session failed:', error?.message);
+        req.flash('error_msg', res.locals.__('errorOccurred'));
+        res.redirect(`/specialist/child/${req.params.id}/analytics`);
     }
 });
 
