@@ -28,10 +28,9 @@ router.use(ensureSpecialist);
 // List Words/Letters (or Select Child)
 router.get('/', async (req, res) => {
     try {
-        const { childId, difficulty, contentType } = req.query;
+        const { childId, difficulty, contentType, sessionId } = req.query;
 
         // Fetch children list first (needed for both views)
-        // CORRECTED PATH: /specialists/my-children
         const childrenResponse = await apiClient.authGet(req, '/specialists/my-children');
         const children = childrenResponse.data.success ? childrenResponse.data.children : [];
 
@@ -45,10 +44,18 @@ router.get('/', async (req, res) => {
                 return res.redirect('/specialist/words');
             }
 
-            // Fetch words for this child
-            // CORRECTED PATH: /words/child/:childId
+            // جلب قائمة الجلسات (خطط الطفل)
+            const plansRes = await apiClient.authGet(req, `/exercises/child/${childId}`);
+            const sessions = (plansRes.data.success && Array.isArray(plansRes.data.exercises))
+                ? plansRes.data.exercises.map(plan => ({
+                    _id: plan._id,
+                    sessionName: plan.sessionName || `Session ${plan.sessionIndex || ''}`,
+                    sessionIndex: plan.sessionIndex
+                })) : [];
+
+            // Fetch words/letters for this child, مع sessionId إذا وُجد
             const response = await apiClient.authGet(req, `/words/child/${childId}`, {
-                params: { difficulty, contentType }
+                params: { difficulty, contentType, sessionId }
             });
 
             const { words, letters } = response.data.success ? response.data : { words: [], letters: [] };
@@ -56,12 +63,14 @@ router.get('/', async (req, res) => {
             return res.render('specialist/words', {
                 title: `${res.locals.__('wordsManagement') || 'إدارة المحتوى'} - ${selectedChild.name}`,
                 activePage: 'words',
-                mode: 'manage_child', // Manage content for specific child
+                mode: 'manage_child',
                 child: selectedChild,
                 words: words || [],
                 letters: letters || [],
                 contentType: contentType || 'word',
-                difficulty: difficulty || ''
+                difficulty: difficulty || '',
+                sessions,
+                selectedSessionId: sessionId || ''
             });
         }
 
@@ -69,10 +78,10 @@ router.get('/', async (req, res) => {
         res.render('specialist/words', {
             title: res.locals.__('wordsManagement') || 'إدارة المحتوى',
             activePage: 'words',
-            mode: 'select_child', // Select child mode
+            mode: 'select_child',
             children: children || [],
             words: [],
-            letters: [] // No content until child selected
+            letters: []
         });
 
     } catch (error) {
@@ -85,7 +94,7 @@ router.get('/', async (req, res) => {
 // Add Content (Word or Letter)
 router.post('/add', upload.single('image'), async (req, res) => {
     try {
-        const { text, contentType, difficulty, childId } = req.body;
+        const { text, contentType, difficulty, childId, sessionId } = req.body;
 
         if (!childId) {
             req.flash('error_msg', 'Child ID is required');
@@ -101,7 +110,7 @@ router.post('/add', upload.single('image'), async (req, res) => {
 
         if (!text || !String(text).trim()) {
             req.flash('error_msg', 'Text is required');
-            return res.redirect(`/specialist/words?childId=${childId}&contentType=${normalizedContentType}&difficulty=${normalizedDifficulty}`);
+            return res.redirect(`/specialist/words?childId=${childId}&contentType=${normalizedContentType}&difficulty=${normalizedDifficulty}${sessionId ? `&sessionId=${sessionId}` : ''}`);
         }
 
         const form = new FormData();
@@ -109,6 +118,7 @@ router.post('/add', upload.single('image'), async (req, res) => {
         form.append('contentType', normalizedContentType);
         form.append('difficulty', normalizedDifficulty);
         form.append('childId', childId);
+        if (sessionId) form.append('sessionId', sessionId);
 
         if (req.file) {
             form.append('image', req.file.buffer, req.file.originalname);
@@ -117,7 +127,7 @@ router.post('/add', upload.single('image'), async (req, res) => {
         const authConfig = apiClient.withAuth(req);
         const headers = { ...authConfig.headers, ...form.getHeaders() };
 
-        // CORRECTED PATH: /words (POST)
+        // POST /words (يدعم sessionId)
         const response = await apiClient.post('/words', form, { headers });
 
         if (response.data.success) {
@@ -129,7 +139,7 @@ router.post('/add', upload.single('image'), async (req, res) => {
             req.flash('error_msg', response.data.message || 'Error adding content');
         }
 
-        res.redirect(`/specialist/words?childId=${childId}&contentType=${normalizedContentType}&difficulty=${normalizedDifficulty}`);
+        res.redirect(`/specialist/words?childId=${childId}&contentType=${normalizedContentType}&difficulty=${normalizedDifficulty}${sessionId ? `&sessionId=${sessionId}` : ''}`);
     } catch (error) {
         console.error('Add Word Error:', error.message);
         req.flash('error_msg', 'Error adding content');

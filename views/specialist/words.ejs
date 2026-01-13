@@ -222,6 +222,26 @@
                     </div>
                 </div>
 
+                <!-- اختيار الجلسة (Session) -->
+                <% if (typeof sessions !== 'undefined' && Array.isArray(sessions) && sessions.length > 0) { %>
+                <div class="content-card session-section">
+                    <form method="GET" action="/specialist/words" class="session-form" style="margin-bottom: 1.5rem;">
+                        <input type="hidden" name="childId" value="<%= child._id %>">
+                        <input type="hidden" name="contentType" value="<%= contentType %>">
+                        <input type="hidden" name="difficulty" value="<%= difficulty %>">
+                        <label for="sessionId" style="font-weight: bold; margin-left: 0.5rem;">
+                            <i class="fas fa-layer-group"></i> اختر جلسة الخطة:
+                        </label>
+                        <select name="sessionId" id="sessionId" onchange="this.form.submit()" style="padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid #e5e7eb; margin-left: 0.5rem;">
+                            <option value="" <%= !selectedSessionId ? 'selected' : '' %>>عام (مكتبة الطفل)</option>
+                            <% sessions.forEach(function(session) { %>
+                                <option value="<%= session._id %>" <%= selectedSessionId == session._id ? 'selected' : '' %>><%= session.sessionName %></option>
+                            <% }); %>
+                        </select>
+                    </form>
+                </div>
+                <% } %>
+
                 <div class="content-card add-section">
                     <div class="card-header-custom">
                         <h3><i class="fas fa-plus-circle"></i>
@@ -250,8 +270,12 @@
 
                     <form action="/specialist/words/add" method="POST" enctype="multipart/form-data"
                         class="modern-form" id="contentForm">
+
                         <input type="hidden" name="childId" value="<%= child._id %>">
                         <input type="hidden" name="contentType" id="contentTypeHidden" value="<%= (typeof contentType !== 'undefined' ? contentType : 'word') %>">
+                        <% if (typeof selectedSessionId !== 'undefined' && selectedSessionId) { %>
+                        <input type="hidden" name="sessionId" value="<%= selectedSessionId %>">
+                        <% } %>
 
                         <div class="form-row">
                             <div class="form-col text-inputs">
@@ -336,6 +360,19 @@
                 </div>
 
                 <div class="content-card list-section">
+                    <% if (typeof sessions !== 'undefined' && Array.isArray(sessions) && sessions.length > 0) { %>
+                        <div style="margin-bottom: 1rem;">
+                            <span style="font-weight: bold; color: #3b82f6;">
+                                <i class="fas fa-layer-group"></i>
+                                عرض محتوى:
+                                <% if (selectedSessionId) { %>
+                                    <%= (sessions.find(s => s._id == selectedSessionId) || {}).sessionName || 'جلسة غير معروفة' %>
+                                <% } else { %>
+                                    عام (مكتبة الطفل)
+                                <% } %>
+                            </span>
+                        </div>
+                    <% } %>
                     <div class="toolbar">
                         <h2 id="libraryTitle"><i class="fas fa-layer-group"></i>
                             <%= __('wordLibrary') || 'مكتبة الكلمات' %>
