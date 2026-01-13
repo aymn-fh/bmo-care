@@ -1,69 +1,46 @@
 <%- include('../partials/layout-start', { title: title, activePage: 'words' }) %>
 
     <% if (mode==='select_child' ) { %>
-        <!-- MODE 1: SELECT CHILD -->
+        <!-- الخطوة 1: اختيار الطفل -->
         <div class="page-container-clean">
             <div class="page-header-clean">
                 <h2>
-                    <%= __('wordsManagement') %>
-                        <i class="fas fa-shapes" style="color: #3b82f6;"></i>
+                    إدارة المحتوى
+                    <i class="fas fa-shapes" style="color: #3b82f6;"></i>
                 </h2>
                 <p class="text-muted" style="margin-right: 1rem;">
-                    <%= __('selectChildToManageWords') || 'اختر طفلاً لإدارة كلماته' %>
+                    اختر طفلاً لإدارة جلساته ومحتواه
                 </p>
             </div>
-
             <div class="children-grid-centered">
                 <% if (children && children.length> 0) { %>
                     <% children.forEach(function(child) { %>
                         <a href="/specialist/words?childId=<%= child._id || child.id %>" class="child-card-centered">
-                            <!-- Avatar -->
                             <div class="avatar-large-blue">
                                 <%- include('../partials/child-avatar', { child: child, sizePx: 142 }) %>
                             </div>
-
-                            <!-- Name -->
-                            <h3 class="child-name-clean">
-                                <%= child.name %>
-                            </h3>
-
-                            <!-- Details Row: Age -->
+                            <h3 class="child-name-clean"><%= child.name %></h3>
                             <div class="detail-row-clean">
-                                <span>
-                                    <%= child.age %>
-                                        <%= __('years') %>
-                                </span>
+                                <span><%= child.age %> <%= __('years') %></span>
                                 <i class="fas fa-birthday-cake icon-secondary"></i>
                             </div>
-
-                            <!-- Details Row: Parent -->
                             <div class="detail-row-clean">
-                                <span>
-                                    <%= (child.parent && child.parent.name) ? child.parent.name : (child.parentName || '-') %>
-                                </span>
+                                <span><%= (child.parent && child.parent.name) ? child.parent.name : (child.parentName || '-') %></span>
                                 <i class="fas fa-user icon-primary"></i>
                             </div>
-
-                            <!-- Action Hint -->
                             <div class="action-hint">
-                                <span class="btn-action-text">
-                                    <%= __('manageWords') || 'إدارة الكلمات' %>
-                                </span>
+                                <span class="btn-action-text">إدارة الجلسات والمحتوى</span>
                                 <i class="fas fa-arrow-left"></i>
                             </div>
                         </a>
-                        <% }); %>
-                            <% } else { %>
-                                <div class="empty-state-clean">
-                                    <i class="fas fa-child"></i>
-                                    <h3>
-                                        <%= __('noChildren') %>
-                                    </h3>
-                                    <p>
-                                        <%= __('childrenWillAppear') %>
-                                    </p>
-                                </div>
-                                <% } %>
+                    <% }); %>
+                <% } else { %>
+                    <div class="empty-state-clean">
+                        <i class="fas fa-child"></i>
+                        <h3>لا يوجد أطفال</h3>
+                        <p>سيظهر الأطفال هنا بعد إضافتهم</p>
+                    </div>
+                <% } %>
             </div>
         </div>
 
@@ -201,36 +178,198 @@
         </style>
 
         <% } else { %>
-            <!-- MODE 2: MANAGE CONTENT FOR CHILD -->
+            <!-- الخطوة 2: إعدادات اللعب وجلسات الطفل -->
             <div class="dashboard-container">
                 <div class="page-header-modern">
                     <div class="header-content">
-                        <h1><i class="fas fa-shapes"></i>
-                            <%= __('contentManagement') || 'إدارة المحتوى' %>
-                        </h1>
-                        <p class="text-muted">
-                            <%= __('manageContentFor') || 'إدارة المحتوى للطفل:' %> <strong>
-                                    <%= child.name %>
-                                </strong>
-                        </p>
+                        <h1><i class="fas fa-shapes"></i> إدارة الجلسات والمحتوى للطفل: <strong><%= child.name %></strong></h1>
                     </div>
                     <div class="header-actions">
                         <a href="/specialist/words" class="btn-secondary">
-                            <i class="fas fa-arrow-right"></i>
-                            <%= __('backToChildren') || 'العودة للأطفال' %>
+                            <i class="fas fa-arrow-right"></i> العودة للأطفال
                         </a>
                     </div>
                 </div>
 
-                <!-- اختيار الجلسة (Session) -->
-                <% if (typeof sessions !== 'undefined' && Array.isArray(sessions) && sessions.length > 0) { %>
+                <!-- إعدادات اللعب -->
+                <div class="content-card">
+                    <div class="card-header-custom">
+                        <h3><i class="fa-solid fa-calendar-check"></i> إعدادات اللعب</h3>
+                    </div>
+                    <form method="POST" action="/specialist/child/<%= child._id %>/plan-settings" style="padding: 1rem;">
+                        <div class="form-row" style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                            <div class="form-group">
+                                <label>الحد اليومي (دقيقة)</label>
+                                <input class="form-control" type="number" name="dailyPlayDuration" min="0" value="<%= (child.dailyPlayDuration != null ? child.dailyPlayDuration : '') %>">
+                            </div>
+                            <div class="form-group">
+                                <label>مدة الجلسة (دقيقة)</label>
+                                <input class="form-control" type="number" name="playDuration" min="1" value="<%= (child.sessionStructure && child.sessionStructure.playDuration != null) ? child.sessionStructure.playDuration : '' %>">
+                            </div>
+                            <div class="form-group">
+                                <label>مدة الاستراحة (دقيقة)</label>
+                                <input class="form-control" type="number" name="breakDuration" min="0" value="<%= (child.sessionStructure && child.sessionStructure.breakDuration != null) ? child.sessionStructure.breakDuration : '' %>">
+                            </div>
+                            <div class="form-group">
+                                <label>أقصى عدد محاولات للجلسة</label>
+                                <input class="form-control" type="number" name="maxAttempts" min="1" value="<%= (child.sessionStructure && child.sessionStructure.maxAttempts != null) ? child.sessionStructure.maxAttempts : '' %>">
+                            </div>
+                        </div>
+                        <hr style="margin: 1rem 0; opacity: 0.2;"/>
+                        <div class="form-group" style="display:flex; align-items:center; gap:0.5rem;">
+                            <input type="checkbox" name="scheduleEnabled" id="scheduleEnabled" <%= (child.playSchedule && child.playSchedule.enabled) ? 'checked' : '' %> />
+                            <label for="scheduleEnabled" style="margin:0;">تفعيل جدول اللعب</label>
+                        </div>
+                        <div class="form-group" style="margin-top: 0.75rem;">
+                            <label>أيام السماح</label>
+                            <% const days = [
+                                { v: 0, t: 'الأحد' },
+                                { v: 1, t: 'الإثنين' },
+                                { v: 2, t: 'الثلاثاء' },
+                                { v: 3, t: 'الأربعاء' },
+                                { v: 4, t: 'الخميس' },
+                                { v: 5, t: 'الجمعة' },
+                                { v: 6, t: 'السبت' },
+                            ];
+                            const allowedRaw = (child.playSchedule && Array.isArray(child.playSchedule.allowedDays)) ? child.playSchedule.allowedDays : [];
+                            const allowed = allowedRaw.map(x => Number(x)).filter(x => Number.isFinite(x));
+                            %>
+                            <div style="display:flex; flex-wrap:wrap; gap:0.75rem;">
+                                <% days.forEach(d => { %>
+                                    <label style="display:flex; align-items:center; gap:0.35rem;">
+                                        <input type="checkbox" name="allowedDays" value="<%= d.v %>" <%= allowed.includes(d.v) ? 'checked' : '' %> />
+                                        <span><%= d.t %></span>
+                                    </label>
+                                <% }); %>
+                            </div>
+                            <div style="margin-top:0.5rem; color:#64748b; font-size:0.85rem;">إذا لم يتم اختيار أيام، سيتم السماح بكل الأيام.</div>
+                        </div>
+                        <% const w0 = (child.playSchedule && Array.isArray(child.playSchedule.windows) && child.playSchedule.windows.length)
+                            ? child.playSchedule.windows[0]
+                            : null;
+                        %>
+                        <div class="form-row" style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.75rem;">
+                            <div class="form-group">
+                                <label>من</label>
+                                <input class="form-control" type="time" name="windowStart" value="<%= (w0 && w0.start) ? w0.start : '' %>">
+                            </div>
+                            <div class="form-group">
+                                <label>إلى</label>
+                                <input class="form-control" type="time" name="windowEnd" value="<%= (w0 && w0.end) ? w0.end : '' %>">
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" type="submit" style="margin-top: 0.75rem; width: 100%;">حفظ إعدادات اللعب</button>
+                    </form>
+                </div>
+
+                <!-- جلسات الخطة -->
+                <div class="content-card">
+                    <div class="card-header-custom">
+                        <h3><i class="fa-solid fa-layer-group"></i> جلسات الخطة</h3>
+                    </div>
+                    <div style="padding: 1rem;">
+                        <div style="margin-bottom: 0.75rem; color:#64748b; font-size:0.9rem;">
+                            الجلسة النشطة هي التي تُرسل رقمها مع كل تقدم من اللعبة.
+                        </div>
+                        <div style="max-height: 160px; overflow:auto; border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 10px;">
+                            <table class="clean-blue-table" style="margin:0;">
+                                <thead>
+                                    <tr>
+                                        <th>Session</th>
+                                        <th>الاسم</th>
+                                        <th>نشطة</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% if (!sessions || sessions.length === 0) { %>
+                                        <tr><td colspan="3" style="text-align:center; color:#64748b;">لا توجد جلسات خطة بعد</td></tr>
+                                    <% } else { %>
+                                        <% sessions.forEach(p => { %>
+                                            <tr>
+                                                <td><%= p.sessionIndex != null ? p.sessionIndex : '-' %></td>
+                                                <td><%= p.sessionName || '-' %></td>
+                                                <td>
+                                                    <% if (p.active) { %>
+                                                        <span style="color:#16a34a; font-weight:600;">نعم</span>
+                                                    <% } else { %>
+                                                        <span style="color:#64748b;">لا</span>
+                                                    <% } %>
+                                                </td>
+                                            </tr>
+                                        <% }); %>
+                                    <% } %>
+                                </tbody>
+                            </table>
+                        </div>
+                        <hr style="margin: 1rem 0; opacity: 0.2;"/>
+                        <!-- إنشاء جلسة جديدة مع تحديد مدى ووقت اللعب -->
+                        <form method="POST" action="/specialist/child/<%= child._id %>/create-plan-session">
+                            <div class="form-group">
+                                <label>اسم الجلسة (اختياري)</label>
+                                <input class="form-control" type="text" name="sessionName" placeholder="Session 1">
+                            </div>
+                            <div class="form-group" style="margin-top:0.5rem;">
+                                <label>مدة الجلسة (دقيقة)</label>
+                                <input class="form-control" type="number" name="targetDuration" min="1" placeholder="15">
+                            </div>
+                            <div class="form-group" style="margin-top:0.5rem;">
+                                <label>تفعيل جدول اللعب للجلسة</label>
+                                <input type="checkbox" name="scheduleEnabled" id="scheduleEnabledSession">
+                            </div>
+                            <div class="form-group" style="margin-top: 0.75rem;">
+                                <label>أيام السماح للجلسة</label>
+                                <% const days = [
+                                    { v: 0, t: 'الأحد' },
+                                    { v: 1, t: 'الإثنين' },
+                                    { v: 2, t: 'الثلاثاء' },
+                                    { v: 3, t: 'الأربعاء' },
+                                    { v: 4, t: 'الخميس' },
+                                    { v: 5, t: 'الجمعة' },
+                                    { v: 6, t: 'السبت' },
+                                ]; %>
+                                <div style="display:flex; flex-wrap:wrap; gap:0.75rem;">
+                                    <% days.forEach(d => { %>
+                                        <label style="display:flex; align-items:center; gap:0.35rem;">
+                                            <input type="checkbox" name="allowedDays" value="<%= d.v %>" />
+                                            <span><%= d.t %></span>
+                                        </label>
+                                    <% }); %>
+                                </div>
+                                <div style="margin-top:0.5rem; color:#64748b; font-size:0.85rem;">إذا لم يتم اختيار أيام، سيتم السماح بكل الأيام.</div>
+                            </div>
+                            <div class="form-row" style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.75rem;">
+                                <div class="form-group">
+                                    <label>وقت البداية للجلسة</label>
+                                    <input class="form-control" type="time" name="windowStart">
+                                </div>
+                                <div class="form-group">
+                                    <label>وقت النهاية للجلسة</label>
+                                    <input class="form-control" type="time" name="windowEnd">
+                                </div>
+                            </div>
+                            <div class="form-row" style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.75rem;">
+                                <div class="form-group">
+                                    <label>حروف (كل سطر حرف أو مفصول بفاصلة)</label>
+                                    <textarea class="form-control" name="lettersText" rows="6" placeholder="ب\nت\nث"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>كلمات (كل سطر كلمة أو مفصول بفاصلة)</label>
+                                    <textarea class="form-control" name="wordsText" rows="6" placeholder="بابا\nماما"></textarea>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" type="submit" style="margin-top: 0.75rem; width: 100%;">إنشاء Session جديدة (وتفعيلها)</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- الخطوة 3: اختيار جلسة لإدارة محتواها -->
                 <div class="content-card session-section">
                     <form method="GET" action="/specialist/words" class="session-form" style="margin-bottom: 1.5rem;">
                         <input type="hidden" name="childId" value="<%= child._id %>">
                         <input type="hidden" name="contentType" value="<%= contentType %>">
                         <input type="hidden" name="difficulty" value="<%= difficulty %>">
                         <label for="sessionId" style="font-weight: bold; margin-left: 0.5rem;">
-                            <i class="fas fa-layer-group"></i> اختر جلسة الخطة:
+                            <i class="fas fa-layer-group"></i> اختر جلسة لإدارة محتواها:
                         </label>
                         <select name="sessionId" id="sessionId" onchange="this.form.submit()" style="padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid #e5e7eb; margin-left: 0.5rem;">
                             <option value="" <%= !selectedSessionId ? 'selected' : '' %>>عام (مكتبة الطفل)</option>
@@ -240,139 +379,9 @@
                         </select>
                     </form>
                 </div>
-                <% } %>
 
-                <div class="content-card add-section">
-                    <div class="card-header-custom">
-                        <h3><i class="fas fa-plus-circle"></i>
-                            <%= __('addNewContent') || 'إضافة محتوى جديد' %>
-                        </h3>
-                        <p style="margin: 0.5rem 0 0 0; font-size: 0.85rem; color: #64748b;">
-                            <i class="fas fa-info-circle" style="margin-left: 4px;"></i>
-                            سيتم إرسال هذا المحتوى تلقائيًا إلى لعبة تدريب الطفل
-                        </p>
-                    </div>
-
-                    <!-- Content Type Toggle -->
-                    <div class="content-type-toggle">
-                        <input type="radio" name="contentType" id="type-word" value="word" <%= (typeof contentType === 'undefined' || !contentType || contentType === 'word') ? 'checked' : '' %> onchange="toggleContentType()">
-                        <label for="type-word" class="toggle-btn word-toggle">
-                            <i class="fas fa-font"></i>
-                            <%= __('words') || 'كلمات' %>
-                        </label>
-
-                        <input type="radio" name="contentType" id="type-letter" value="letter" <%= (typeof contentType !== 'undefined' && contentType === 'letter') ? 'checked' : '' %> onchange="toggleContentType()">
-                        <label for="type-letter" class="toggle-btn letter-toggle">
-                            <i class="fas fa-abc"></i>
-                            <%= __('letters') || 'حروف' %>
-                        </label>
-                    </div>
-
-                    <form action="/specialist/words/add" method="POST" enctype="multipart/form-data"
-                        class="modern-form" id="contentForm">
-
-                        <input type="hidden" name="childId" value="<%= child._id %>">
-                        <input type="hidden" name="contentType" id="contentTypeHidden" value="<%= (typeof contentType !== 'undefined' ? contentType : 'word') %>">
-                        <% if (typeof selectedSessionId !== 'undefined' && selectedSessionId) { %>
-                        <input type="hidden" name="sessionId" value="<%= selectedSessionId %>">
-                        <% } %>
-
-                        <div class="form-row">
-                            <div class="form-col text-inputs">
-                                <div class="form-group" id="textGroup">
-                                    <label for="text" style="display: block; margin-bottom: 0.5rem; font-weight: bold;" id="textLabel">
-                                        <%= __('wordText') %>
-                                    </label>
-                                    <div class="input-with-vowels">
-                                        <div class="input-row">
-                                            <input type="text" name="text" id="text" class="form-control" required
-                                                placeholder="<%= __('enterWord') %>" maxlength="20">
-                                            <button type="button" class="clear-btn" id="clearBtn" style="display: none;" title="مسح النص">
-                                                <i class="fas fa-times"></i>
-                                            </button>
-                                        </div>
-                                        <div class="vowel-buttons" id="vowelButtons" style="display: none;">
-                                            <button type="button" class="vowel-btn" data-vowel="َ" title="فَتح (fatha)">َ</button>
-                                            <button type="button" class="vowel-btn" data-vowel="ِ" title="كسرة (kasra)">ِ</button>
-                                            <button type="button" class="vowel-btn" data-vowel="ُ" title="ضمة (damma)">ُ</button>
-                                            <button type="button" class="vowel-btn" data-vowel="ْ" title="سكون (sukun)">ْ</button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="form-group">
-                                    <label class="label-sm">
-                                        <%= __('difficultyLevel') %>
-                                    </label>
-                                    <div class="difficulty-selector">
-                                        <input type="radio" name="difficulty" id="diff_easy" value="easy" checked>
-                                        <label for="diff_easy" class="diff-btn easy">
-                                            <%= __('easy') %>
-                                        </label>
-
-                                        <input type="radio" name="difficulty" id="diff_medium" value="medium">
-                                        <label for="diff_medium" class="diff-btn medium">
-                                            <%= __('medium') %>
-                                        </label>
-
-                                        <input type="radio" name="difficulty" id="diff_hard" value="hard">
-                                        <label for="diff_hard" class="diff-btn hard">
-                                            <%= __('hard') %>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="form-col suggestions-box" id="suggestionsBox">
-                                <label id="suggestionsLabel"
-                                    style="display: block; margin-bottom: 0.5rem; font-weight: bold; color: #334155;">
-                                    <i class="fas fa-lightbulb" style="color: #fbbf24; margin-left: 5px;"></i>
-                                    <%= __('suggestedWords') || 'كلمات مقترحة' %>
-                                </label>
-                                <div class="suggestions-grid" id="suggestionsGrid">
-                                    <!-- Word suggestions will be loaded here -->
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-footer">
-                            <button type="submit" class="btn-main" id="submitBtn">
-                                <i class="fas fa-save"></i>
-                                <%= __('saveWord') || 'حفظ الكلمة' %>
-                            </button>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Content Display Toggle -->
-                <div class="content-display-toggle">
-                    <input type="radio" name="displayType" id="display-words" value="words" checked onchange="toggleContentDisplay()">
-                    <label for="display-words" class="display-btn">
-                        <i class="fas fa-font"></i>
-                        <%= __('words') || 'كلمات' %>
-                    </label>
-
-                    <input type="radio" name="displayType" id="display-letters" value="letters" onchange="toggleContentDisplay()">
-                    <label for="display-letters" class="display-btn">
-                        <i class="fas fa-abc"></i>
-                        <%= __('letters') || 'حروف' %>
-                    </label>
-                </div>
-
-                <div class="content-card list-section">
-                    <% if (typeof sessions !== 'undefined' && Array.isArray(sessions) && sessions.length > 0) { %>
-                        <div style="margin-bottom: 1rem;">
-                            <span style="font-weight: bold; color: #3b82f6;">
-                                <i class="fas fa-layer-group"></i>
-                                عرض محتوى:
-                                <% if (selectedSessionId) { %>
-                                    <%= (sessions.find(s => s._id == selectedSessionId) || {}).sessionName || 'جلسة غير معروفة' %>
-                                <% } else { %>
-                                    عام (مكتبة الطفل)
-                                <% } %>
-                            </span>
-                        </div>
-                    <% } %>
+                <!-- الخطوة 4: إدارة الكلمات والحروف للجلسة -->
+                ...existing code...
                     <div class="toolbar">
                         <h2 id="libraryTitle"><i class="fas fa-layer-group"></i>
                             <%= __('wordLibrary') || 'مكتبة الكلمات' %>

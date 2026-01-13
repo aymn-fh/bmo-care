@@ -805,6 +805,13 @@ router.post('/child/:id/create-plan-session', async (req, res) => {
         const targetDuration = req.body.targetDuration ? Number(req.body.targetDuration) : undefined;
         const sessionName = String(req.body.sessionName || '').trim();
 
+        const scheduleEnabled = req.body.scheduleEnabled === 'on' || req.body.scheduleEnabled === true;
+        const allowedDays = Array.isArray(req.body.allowedDays)
+            ? req.body.allowedDays.map(Number).filter(x => Number.isFinite(x))
+            : req.body.allowedDays ? [Number(req.body.allowedDays)] : [];
+        const windowStart = req.body.windowStart || '';
+        const windowEnd = req.body.windowEnd || '';
+
         const parseLines = (s) => String(s || '')
             .split(/\r?\n|,/g)
             .map(x => x.trim())
@@ -813,12 +820,20 @@ router.post('/child/:id/create-plan-session', async (req, res) => {
         const letters = parseLines(req.body.lettersText).map(letter => ({ letter }));
         const words = parseLines(req.body.wordsText).map(word => ({ word }));
 
+        // إعدادات مدى ووقت اللعب للجلسة
+        const playSchedule = {
+            enabled: scheduleEnabled,
+            allowedDays,
+            windows: (windowStart && windowEnd) ? [{ start: windowStart, end: windowEnd }] : [],
+        };
+
         await apiClient.authPost(req, '/exercises', {
             childId,
             letters,
             words,
             ...(typeof targetDuration === 'number' ? { targetDuration } : {}),
             ...(sessionName ? { sessionName } : {}),
+            playSchedule,
         });
 
         req.flash('success_msg', 'تم إنشاء جلسة جديدة للخطة.');
