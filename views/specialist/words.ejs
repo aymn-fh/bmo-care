@@ -318,24 +318,24 @@
                             </div>
                             <div class="form-group" style="margin-top: 0.75rem;">
                                 <label>أيام السماح للجلسة</label>
-                                <% const days = [
-                                    { v: 0, t: 'الأحد' },
-                                    { v: 1, t: 'الإثنين' },
-                                    { v: 2, t: 'الثلاثاء' },
-                                    { v: 3, t: 'الأربعاء' },
-                                    { v: 4, t: 'الخميس' },
-                                    { v: 5, t: 'الجمعة' },
-                                    { v: 6, t: 'السبت' },
-                                ]; %>
-                                <div style="display:flex; flex-wrap:wrap; gap:0.75rem;">
-                                    <% days.forEach(d => { %>
-                                        <label style="display:flex; align-items:center; gap:0.35rem;">
-                                            <input type="checkbox" name="allowedDays" value="<%= d.v %>" />
-                                            <span><%= d.t %></span>
-                                        </label>
-                                    <% }); %>
-                                </div>
-                                <div style="margin-top:0.5rem; color:#64748b; font-size:0.85rem;">إذا لم يتم اختيار أيام، سيتم السماح بكل الأيام.</div>
+                                <% const daysSession = [
+                                        { v: 0, t: 'الأحد' },
+                                        { v: 1, t: 'الإثنين' },
+                                        { v: 2, t: 'الثلاثاء' },
+                                        { v: 3, t: 'الأربعاء' },
+                                        { v: 4, t: 'الخميس' },
+                                        { v: 5, t: 'الجمعة' },
+                                        { v: 6, t: 'السبت' },
+                                    ]; %>
+                                    <div style="display:flex; flex-wrap:wrap; gap:0.75rem;">
+                                        <% daysSession.forEach(d => { %>
+                                            <label style="display:flex; align-items:center; gap:0.35rem;">
+                                                <input type="checkbox" name="allowedDays" value="<%= d.v %>" />
+                                                <span><%= d.t %></span>
+                                            </label>
+                                        <% }); %>
+                                    </div>
+                                    <div style="margin-top:0.5rem; color:#64748b; font-size:0.85rem;">إذا لم يتم اختيار أيام، سيتم السماح بكل الأيام.</div>
                             </div>
                             <div class="form-row" style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.75rem;">
                                 <div class="form-group">
